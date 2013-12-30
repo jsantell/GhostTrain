@@ -6,6 +6,11 @@ var utils = require('./utils');
 var Route = require('./route');
 var send = require('./send');
 
+/**
+ * Mocker constructor
+ *
+ */
+
 function Mocker () {
   this.routes = {
     'get': [],
@@ -75,20 +80,44 @@ Mocker.prototype.sync = function () {
       params.data = JSON.stringify(options.attrs || model.toJSON(options));
     }
 
-    var routes = findRoute(mocker, type, options.url || params.url);
+    var route = mocker.findRoutes(type, options.url || params.url)[0];
 
-    return send(mocker, routes, params).then(function (data) {
-      console.log('calling success', options.success,data);
-      if (options.success)
-        options.success.call(model, data);
-    }, function (err) {
-      console.log(err);
-      if (options.error)
-        options.error.call(model, err);
-      // Keep the error propagated
-      throw new Error(err);
-    });
+    var reqOptions = {
+      params: route.params,
+      body: JSON.stringify(params || '{}')
+    };
+
+    return send(mocker, route, reqOptions)
+      .then(function (data) {
+        if (options.success)
+          options.success.call(model, data);
+      }, function (err) {
+        if (options.error)
+          options.error.call(model, err);
+        // Keep the error propagated
+        throw new Error(err);
+      });
   };
+};
+
+/**
+ * Mocker#findRoutes takes a verb and a path and returns an array of all
+ * routes that match the request
+ *
+ * @param {String} verb
+ * @param {Path} verb
+ * @return {Array}
+ */
+
+Mocker.prototype.findRoutes = function (verb, path) {
+  var routes = this.routes[verb];
+  var matchedRoutes = routes.reduce(function (matching, route) {
+    if (route.match(path))
+      matching.push(route);
+    return matching;
+  }, []);
+
+  return matchedRoutes;
 };
 
 function addRoute (verb) {
@@ -100,28 +129,16 @@ function addRoute (verb) {
   };
 }
 
-function findRoute (mocker, verb, path) {
-  var routes = mocker.routes[verb];
-  var matchedRoutes = routes.reduce(function (matching, route) {
-    if (route.match(path))
-      matching.push(route);
-    return matching;
-  }, []);
-
-  return matchedRoutes;
-}
-
 },{"./route":5,"./send":6,"./utils":7}],3:[function(require,module,exports){
 /**
- * Takes Backbone's `params` and turns it into an Express-style `request` object.
+ * Take formatted options and creates an Express style `req` object
  *
  * @param {Object} mocker
- * @param {Object} route
- * @param {Object} params
+ * @param {Object} options
  * @return {Object}
  */
 
-function Request (mocker, route, params) {
+function Request (mocker, options) {
   // TODO
   this.get = this.header = this.range;
   this.accepts = this.acceptsEncoding = this.acceptsCharset = this.acceptsLanguage = this.is = noop;
@@ -132,8 +149,8 @@ function Request (mocker, route, params) {
   this.path = this.host = '';
   this.query = {};
 
-  this.params = route.params;
-  this.body = JSON.stringify(params || '{}');
+  this.params = options.params;
+  this.body = options.body;
 }
 module.exports = Request;
 
@@ -319,13 +336,12 @@ var when = require('when');
 var Request = require('./request');
 var Response = require('./response');
 
-function send (mocker, routes, params) {
+function send (mocker, route, options) {
   var deferred = when.defer();
-  var route = routes[0]
   var req, res;
 
   if (route) {
-    req = new Request(mocker, route, params);
+    req = new Request(mocker, options);
     res = new Response(mocker, success);
     route.callback(req, res);
   } else {
@@ -333,7 +349,6 @@ function send (mocker, routes, params) {
   }
 
   function success (message) {
-    console.log(res.statusCode, message)
     if (res.statusCode !== 200)
       deferred.reject(message);
     else
