@@ -254,7 +254,9 @@ Object.__defineGetter__.call(Request.prototype, 'xhr', function() {
 });
 
 },{"./url":7,"./utils":8,"range-parser":12,"simple-mime":13}],4:[function(require,module,exports){
+var mime = require('simple-mime')();
 var utils = require('./utils');
+var unsupported = utils.unsupported;
 
 /**
  * Shims features of Express's `response` object in routes.
@@ -267,7 +269,7 @@ var utils = require('./utils');
 
 function Response (ghosttrain, callback) {
   this.charset = '';
-
+  this.headers = {};
   this.statusCode = 200;
 
   this.app = ghosttrain;
@@ -316,7 +318,7 @@ Response.prototype = {
    *   res.json({});
    *   res.json(200, 'text');
    *   res.json(404, 'woops');
-   * 
+   *
    * @param {Mixed} body or status code
    * @param {Mixed} object data
    * @return {Response}
@@ -339,10 +341,6 @@ Response.prototype = {
     return this.send(body);
   },
 
-  jsonp: function () {
-    throw new Error('res.jsonp not yet supported');
-  },
-
   /**
    * Sets status `code`
    *
@@ -355,15 +353,107 @@ Response.prototype = {
     return this;
   },
 
-  set: function (field, value) {},
-  get: function (field) {},
-  cookie: function (name, value, options) {},
-  clearCookie: function (name, options) {},
-  redirect: function (status, url) {},
-  location: function () {},
+  /**
+   * Sets `field` header to `value`, or accepts an object and applies
+   * those key value pairs to the Response object's headers.
+   *
+   * @param {String|Object} field
+   * @param {String} value
+   * @return {Response}
+   */
+
+  set: function (field, value) {
+    if (arguments.length === 2)
+      this.headers[field] = value;
+    else {
+      for (var prop in field)
+        this.headers[prop] = field[prop];
+    }
+    return this;
+  },
+
+  /**
+   * Alias for `res.set`.
+   */
+
+  header: function (field, value) {
+    return this.set(field, value);
+  },
+
+  /**
+   * Gets header value of `field`
+   *
+   * @param {String} field
+   * @return {String}
+   */
+
+  get: function (field) {
+    return this.headers[field];
+  },
+
+  /**
+   * Set Link header field with the given `links`.
+   *
+   * Examples:
+   *
+   *   res.links({
+   *     next: 'http://api.example.com/users?page=2',
+   *     last: 'http://api.example.com/users?page=5'
+   *   });
+   *
+   * @param {Object} links
+   * @return {Response}
+   */
+
+  links: function (links){
+    var link = this.get('Link') || '';
+    if (link) link += ', ';
+    return this.set('Link', link + Object.keys(links).map(function(rel){
+      return '<' + links[rel] + '>; rel="' + rel + '"';
+    }).join(', '));
+  },
+
+  /**
+   * Set _Content-Type_ response header with `type` through `mime.lookup()`
+   * when it does not contain "/", or set the Content-Type to `type` otherwise.
+   *
+   * Examples:
+   *
+   *   res.type('.html');
+   *   res.type('html');
+   *   res.type('json');
+   *   res.type('application/json');
+   *   res.type('png');
+   *
+   * @param {String} type
+   * @return {Response}
+   */
+
+  contentType: function (type) {
+    return this.set('Content-Type', ~type.indexOf('/')
+      ? type
+      : mime(type));
+  },
+
+  /**
+   * Alias for `res.contentType`
+   */
+
+  type: function (type) {
+    return this.contentType(type);
+  }
+
 };
 
-},{"./utils":8}],5:[function(require,module,exports){
+/**
+ * Set up unsupported functions
+ */
+['clearCookie', 'cookie', 'attachment', 'jsonp', 'sendfile',
+  'download', 'format', 'location', 'redirect', 'vary', 'render'].forEach(function (prop) {
+  Response.prototype[prop] = unsupported('res.' + prop + '()');
+});
+
+},{"./utils":8,"simple-mime":13}],5:[function(require,module,exports){
 var utils = require('./utils');
 
 /**
@@ -518,12 +608,12 @@ function render (req, res, body) {
     response[prop] = parsedURL[prop];
 
   // Append select `req` properties
-  ['headers', 'method', 'url'].forEach(function (prop) {
+  ['method', 'url'].forEach(function (prop) {
     response[prop] = req[prop];
   });
 
   // Append select `res` properties
-  ['statusCode'].forEach(function (prop) {
+  ['headers', 'statusCode'].forEach(function (prop) {
     response[prop] = res[prop];
   });
 
