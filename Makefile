@@ -5,9 +5,9 @@ all: browserify min
 
 browserify:
 	mkdir -p ./dist
-	node $(BROWSERIFY) -t brfs --standalone Mocker ./index.js > ./dist/mocker.js
+	node $(BROWSERIFY) -t brfs --standalone GhostTrain ./index.js > ./dist/ghosttrain.js
 
 min:
-	node $(UGLIFY) ./dist/mocker.js -o ./dist/mocker.min.js
+	node $(UGLIFY) ./dist/ghosttrain.js -o ./dist/ghosttrain.min.js
 
 .PHONY: browserify min

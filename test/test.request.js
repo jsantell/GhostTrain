@@ -1,156 +1,66 @@
-describe('Mocker.Request', function () {
-  describe('Backbone Model', function () {
+describe('Request', function () {
+  describe('req.params', function () {
+    it('populates req.params array from :params in route', function (done) {
+      var gt = new GhostTrain();
 
-    it('POST Route', function (done) {
-      var mocker = new Mocker();
-      var User = createModels(mocker).User;
-      var user = new User({
-        name: 'Ragnarr Loðbrók',
-        job: 'Viking'
+      gt.get('/users/:field1/:field2/:id', function (req, res) {
+        expect(req.params.field1).to.be.equal('long');
+        expect(req.params.field2).to.be.equal('user');
+        expect(req.params.id).to.be.equal('12345');
+        res.send();
       });
 
-      var response = {};
-
-      mocker.post('/users', function (req, res) {
-        res.send(response);
-      });
-
-      user.save(null, {
-        success: function (_, res) {
-          expect(res).to.be.equal(response);
-          done();
-        }
+      gt.send('GET', '/users/long/user/12345', function (err, res) {
+        done();
       });
     });
 
-    it('GET Route', function (done) {
-      var mocker = new Mocker();
-      var User = createModels(mocker).User;
-      var user = new User({
-        id: 12345
+    it('populates req.params array from regex in route', function (done) {
+      var gt = new GhostTrain();
+
+      gt.get(/users\/([^\/]*)\/u(ser)\/([^\/]*)/, function (req, res) {
+        expect(req.params[0]).to.be.equal('long');
+        expect(req.params[1]).to.be.equal('ser');
+        expect(req.params[2]).to.be.equal('12345');
+        res.send();
       });
 
-      var response = {};
-
-      mocker.get('/users/:id', function (req, res) {
-        res.send(200, {
-          name: 'Jesper Strömblad',
-          job: 'shredding allday'
-        });
-      });
-
-      user.fetch({
-        success: function (_, res) {
-          expect(res.name).to.be.equal('Jesper Strömblad');
-          expect(res.job).to.be.equal('shredding allday');
-          expect(user.get('name')).to.be.equal('Jesper Strömblad');
-          expect(user.get('job')).to.be.equal('shredding allday');
-          done();
-        }
+      gt.send('GET', '/users/long/user/12345', function (err, res) {
+        done();
       });
     });
-
-    it('PUT Route', function (done) {
-      var mocker = new Mocker();
-      var User = createModels(mocker).User;
-      var user = new User({
-        name: 'Dominic Cifarelli',
-        // Give it an id so Backbone thinks it's an update
-        id: 12345
-      });
-
-      var response = {};
-
-      mocker.put('/users/:id', function (req, res) {
-        res.send(response);
-      });
-
-      user.save(null, {
-        success: function (_, res) {
-          expect(res).to.be.equal(response);
-          done();
-        }
-      });
-    });
-
-    it('DELETE Route', function (done) {
-      var mocker = new Mocker();
-      var User = createModels(mocker).User;
-      var user = new User({
-        name: 'Dominic Cifarelli',
-        // Give it an id so Backbone thinks it's an update
-        id: 12345
-      });
-
-      var response = {};
-
-      mocker.delete('/users/:id', function (req, res) {
-        res.send(response);
-      });
-
-      user.destroy({
-        success: function (_, res) {
-          expect(res).to.be.equal(response);
-          done();
-        }
-      });
-    });
-
   });
 
-  describe('Routing', function () {
-    it('uses best matching route', function (done) {
-      var mocker = new Mocker();
-      var User = createModels(mocker).User;
-      var user = new User({
-        id: 12345
-      });
-      
-      var data = {
-        name: 'Jesper Strömblad',
-        job: 'shredding allday'
-      };
+  describe('req.body', function () {
+    it('populates req.body on POST', function (done) {
+      var gt = new GhostTrain();
 
-      mocker.get('/', function (req, res) {
-        res.send(400);
+      gt.post('/users', function (req, res) {
+        expect(req.body.name).to.be.equal('Justin Timberlake');
+        expect(req.body.jams).to.be.equal('FutureSex/LoveSounds');
+        res.send();
       });
 
-      mocker.get('/users', function (req, res) {
-        res.send(400);
-      });
-
-      mocker.get('/users/:id', function (req, res) {
-        res.send(200, data);
-      });
-
-      user.fetch({
-        success: function (_, res) {
-          expect(res).to.be.equal(data);
-          done();
-        },
-        error: done
+      gt.send('POST', '/users', {
+        body: {
+          name: 'Justin Timberlake',
+          jams: 'FutureSex/LoveSounds'
+        }
+      }, function (err, res) {
+        done();
       });
     });
 
-    [301, 404, 500].forEach(function (status) {
-      it('fails request when responding with status code ' + status, function (done) {
-        var mocker = new Mocker();
-        var User = createModels(mocker).User;
-        var user = new User({
-          id: 12345
-        });
-     
-        mocker.get('/users/:id', function (req, res) {
-          res.send(status);
-        });
-     
-        user.fetch({
-          success: done,
-          error: function (_, err) {
-            expect(err).to.be.ok;
-            done();
-          }
-        });
+    it('it is an empty object by default', function (done) {
+      var gt = new GhostTrain();
+
+      gt.get('/users/:id', function (req, res) {
+        expect(req.body).to.be.an('object');
+        res.send();
+      });
+
+      gt.send('GET', '/users/12345', function (err, res) {
+        done();
       });
     });
   });

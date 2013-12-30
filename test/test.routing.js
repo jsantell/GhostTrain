@@ -1,155 +1,98 @@
 describe('Routing', function () {
-  describe('Backbone Model', function () {
+  describe('GhostTrain#VERB', function () {
+    it('GhostTrain#post(path, callback)', function (done) {
+      var gt = new GhostTrain();
 
-    it('POST Route', function (done) {
-      var mocker = new Mocker();
-      var User = createModels(mocker).User;
-      var user = new User({
-        name: 'Ragnarr Loðbrók',
-        job: 'Viking'
+      gt.post('/users', function (req, res) {
+        res.send('response');
       });
 
-      var response = {};
-
-      mocker.post('/users', function (req, res) {
-        res.send(response);
-      });
-
-      user.save(null, {
-        success: function (_, res) {
-          expect(res).to.be.equal(response);
-          done();
-        }
+      gt.send('POST', '/users', function (err, res, data) {
+        expect(err).to.be.not.ok;
+        expect(data).to.be.equal('response');
+        done();
       });
     });
 
-    it('GET Route', function (done) {
-      var mocker = new Mocker();
-      var User = createModels(mocker).User;
-      var user = new User({
-        id: 12345
+    it('GhostTrain#get(path, callback)', function (done) {
+      var gt = new GhostTrain();
+
+      gt.get('/users', function (req, res) {
+        res.send('response');
       });
 
-      var response = {};
-
-      mocker.get('/users/:id', function (req, res) {
-        res.send(200, {
-          name: 'Jesper Strömblad',
-          job: 'shredding allday'
-        });
-      });
-
-      user.fetch({
-        success: function (_, res) {
-          expect(res.name).to.be.equal('Jesper Strömblad');
-          expect(res.job).to.be.equal('shredding allday');
-          expect(user.get('name')).to.be.equal('Jesper Strömblad');
-          expect(user.get('job')).to.be.equal('shredding allday');
-          done();
-        }
+      gt.send('GET', '/users', function (err, res, data) {
+        expect(err).to.be.not.ok;
+        expect(data).to.be.equal('response');
+        done();
       });
     });
 
-    it('PUT Route', function (done) {
-      var mocker = new Mocker();
-      var User = createModels(mocker).User;
-      var user = new User({
-        name: 'Dominic Cifarelli',
-        // Give it an id so Backbone thinks it's an update
-        id: 12345
+    it('GhostTrain#put(path, callback)', function (done) {
+      var gt = new GhostTrain();
+
+      gt.put('/users', function (req, res) {
+        res.send('response');
       });
 
-      var response = {};
-
-      mocker.put('/users/:id', function (req, res) {
-        res.send(response);
-      });
-
-      user.save(null, {
-        success: function (_, res) {
-          expect(res).to.be.equal(response);
-          done();
-        }
+      gt.send('PUT', '/users', function (err, res, data) {
+        expect(err).to.be.not.ok;
+        expect(data).to.be.equal('response');
+        done();
       });
     });
 
-    it('DELETE Route', function (done) {
-      var mocker = new Mocker();
-      var User = createModels(mocker).User;
-      var user = new User({
-        name: 'Dominic Cifarelli',
-        // Give it an id so Backbone thinks it's an update
-        id: 12345
+    it('GhostTrain#delete(path, callback)', function (done) {
+      var gt = new GhostTrain();
+
+      gt.delete('/users', function (req, res) {
+        res.send('response');
       });
 
-      var response = {};
-
-      mocker.delete('/users/:id', function (req, res) {
-        res.send(response);
-      });
-
-      user.destroy({
-        success: function (_, res) {
-          expect(res).to.be.equal(response);
-          done();
-        }
+      gt.send('DELETE', '/users', function (err, res, data) {
+        expect(err).to.be.not.ok;
+        expect(data).to.be.equal('response');
+        done();
       });
     });
-
   });
 
-  describe('Routing', function () {
+  describe('General Routing', function () {
     it('uses best matching route', function (done) {
-      var mocker = new Mocker();
-      var User = createModels(mocker).User;
-      var user = new User({
-        id: 12345
+      var gt = new GhostTrain();
+      var data = {};
+
+      gt.get('/', function (req, res) {
+        res.send(400);
       });
       
-      var data = {
-        name: 'Jesper Strömblad',
-        job: 'shredding allday'
-      };
-
-      mocker.get('/', function (req, res) {
-        res.send(400);
-      });
-
-      mocker.get('/users', function (req, res) {
-        res.send(400);
-      });
-
-      mocker.get('/users/:id', function (req, res) {
+      gt.get('/users/:id', function (req, res) {
         res.send(200, data);
       });
 
-      user.fetch({
-        success: function (_, res) {
-          expect(res).to.be.equal(data);
-          done();
-        },
-        error: done
+      gt.get('/users', function (req, res) {
+        res.send(400);
+      });
+
+      gt.send('GET', '/users/12345', function (err, res, body) {
+        expect(err).to.not.be.ok;
+        expect(body).to.be.equal(data);
+        done();
       });
     });
 
     [301, 404, 500].forEach(function (status) {
       it('fails request when responding with status code ' + status, function (done) {
-        var mocker = new Mocker();
-        var User = createModels(mocker).User;
-        var user = new User({
-          id: 12345
-        });
-     
-        mocker.get('/users/:id', function (req, res) {
+        var gt = new GhostTrain();
+
+        gt.get('/users/:id', function (req, res) {
           res.send(status);
         });
-     
-        user.fetch({
-          success: done,
-          error: function (_, err) {
-            expect(err).to.be.ok;
-            done();
-          }
+
+        gt.send('GET', '/users/12345', function (err, res, body) {
+          expect(err).to.be.ok;
+          expect(body).to.not.be.ok;
+          done();
         });
       });
     });

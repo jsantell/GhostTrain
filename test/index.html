@@ -8,19 +8,11 @@
 		<div id="mocha"></div>
 		<script src="../node_modules/mocha/mocha.js"></script>
 		<script src="../node_modules/chai/chai.js"></script>
+		<script src="../dist/ghosttrain.js"></script>
 		<script>
-			var $ = {};
-			$.ajax = function () {};
 			var expect = chai.expect;
+			mocha.setup('bdd');
 		</script>
-		<script src="../node_modules/underscore/underscore.js"></script>
-		<script src="../node_modules/backbone/backbone.js"></script>
-		<script src="../dist/mocker.js"></script>
-		<script>
-			var mocker = new Mocker();
-		</script>
-		<script src="resources/models.js"></script>
-		<script>mocha.setup('bdd')</script>
 		<script src="test.routing.js"></script>
 		<script src="test.request.js"></script>
 		<script>

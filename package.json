@@ -8,7 +8,9 @@
   },
   "repository": "",
   "dependencies": {
-    "when": "*"
+    "querystring": "*",
+    "range-parser": "1.0.0",
+    "simple-mime": "*"
   },
   "devDependencies": {
     "mocha": "*",

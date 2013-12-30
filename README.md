@@ -1,13 +1,13 @@
-# Mocker
+# GhostTrain
 
 Create mock routes for client-side frameworks with Express-like API
 
 ## Usage
 
-Set up a `mocker` instance
+Set up a `ghosttrain` instance
 
 ```javascript
-var mocker = new Mocker();
+var ghosttrain = new GhostTrain();
 ```
 
 Set up routes
@@ -20,18 +20,18 @@ var users = {
   }
 }
 
-mocker.get('/users/:id', function (req, res) {
+ghosttrain.get('/users/:id', function (req, res) {
   res.send(200, users[req.parms.id]);
 });
 ```
 
-Tie `mocker` into your Backbone model
+Tie `ghosttrain` into your Backbone model
 
 ```javascript
 // Backbone.js
 var User = Backbone.Model.extend({
   urlRoot: '/users',
-  sync: mocker.sync()
+  sync: ghosttrain.sync()
 });
 ```
 
@@ -49,9 +49,9 @@ user.fetch({
 
 ## API
 
-### mocker
+### GhostTrain()
 
-#### mocker.set(name, value)
+#### ghosttrain.set(name, value)
 
 Sets a setting value, similar to Express's [app.set](http://expressjs.com/api.html#app.set). The [application settings](http://expressjs.com/api.html#app-settings) currently supported are:
 
@@ -60,27 +60,27 @@ Sets a setting value, similar to Express's [app.set](http://expressjs.com/api.ht
 * `json replacer`
 * `json spaces`
 
-#### mocker.get(name)
+#### ghosttrain.get(name)
 
 Gets a setting value, similar to Express's [app.get](http://expressjs.com/api.html#app.get).
 
-#### mocker.enable(name)
+#### ghosttrain.enable(name)
 
 Sets a setting value to `true`, similar to Express's [app.enable](http://expressjs.com/api.html#app.enable)
 
-#### mocker.disable(name)
+#### ghosttrain.disable(name)
 
 Sets a setting value to `false`, similar to Express's [app.disable](http://expressjs.com/api.html#app.disable)
 
-#### mocker.VERB(route, callback)
+#### ghosttrain.VERB(route, callback)
 
 Creates a route; VERB can be `get`, `post`, `put`, or `delete`, similar to Express's [app.verb](http://expressjs.com/api.html#app.VERB).
 
-#### mocker.sync()
+#### ghosttrain.sync()
 
 Returns a replacement function for `Backbone.sync` to be used in Backbone.models.
 
-### request
+### Request
 
 The `request` object is passed into the route callback as the first argument. Much of the API attempts to mimic Express's [request](http://expressjs.com/api.html#request).
 
@@ -92,7 +92,7 @@ Contains an array of mapped route "parameters", like Express's [req.params](http
 
 Is an object containing the parsed request body, like Express's [req.body](http://expressjs.com/api.html#req.body).
 
-### response
+### Response
 
 #### res.send([body|status],[body])
 
