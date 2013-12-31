@@ -1,6 +1,8 @@
 # GhostTrain
 
-Create mock routes for client-side frameworks with Express-like API
+[![browser support](https://ci.testling.com/jsantell/GhostTrain.png)](https://ci.testling.com/jsantell/GhostTrain)
+
+Client-side router in the spirit of [Express](http://expressjs.com) for mock data, development and demos.
 
 ## Usage
 

@@ -1,12 +1,9 @@
 {
   "name": "ghosttrain",
   "version": "0.1.0",
-  "description": "",
+  "description": "Client-side router in the spirit of [Express](http://expressjs.com) for mock data, development and demos.",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": "",
+  "repository": "http://github.com/jsantell/GhostTrain",
   "dependencies": {
     "querystring": "*",
     "range-parser": "1.0.0",
@@ -18,6 +15,22 @@
     "browserify": "*",
     "uglify-js": "*"
   },
-  "author": "",
-  "license": "BSD"
+  "author": "Jordan Santell",
+  "license": "MIT",
+  "testling": {
+    "browsers": {
+      "ie": [8, 9, 10],
+      "firefox": [25, "nightly"],
+      "chrome": [30, "canary"],
+      "opera": [10, "next"],
+      "safari": [5.1, 6]
+    },
+    "harness": "mocha",
+    "scripts": [
+      "node_modules/chai/chai.js",
+      "dist/ghosttrain.js",
+      "test/testlingSetup.js",
+      "test/test.*.js"
+    ]
+  }
 }
