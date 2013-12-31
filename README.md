@@ -25,25 +25,12 @@ ghosttrain.get('/users/:id', function (req, res) {
 });
 ```
 
-Tie `ghosttrain` into your Backbone model
-
 ```javascript
-// Backbone.js
-var User = Backbone.Model.extend({
-  urlRoot: '/users',
-  sync: ghosttrain.sync()
-});
-```
-
-In action:
-
-```javascript
-var user = new User({ id: 1 });
-user.fetch({
-  success: function () {
-    user.get('name'); // 'Ozzie Isaacs'
-    user.get('skills'); // ['Planet Riding']
-  });
+ghosttrain.send('GET', '/users/12345', function (err, res, body) {
+  console.log(body);
+  // { name: 'Ozzie Isaacs', skills: ['Planet Riding'] }
+  console.log(res.statusCode);
+  // 200
 });
 ```
 
