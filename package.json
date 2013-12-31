@@ -25,7 +25,7 @@
       "ie": [8, 9, 10],
       "firefox": [25, "nightly"],
       "chrome": [30, "canary"],
-      "opera": [10, "next"],
+      "opera": [12, "next"],
       "safari": [5.1, 6]
     },
     "harness": "mocha",
