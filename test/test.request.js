@@ -1,3 +1,4 @@
+require('./setup');
 var GhostTrain = require('..');
 var expect = require('chai').expect;
 var getSupported = require('../lib/get').isSupported;
