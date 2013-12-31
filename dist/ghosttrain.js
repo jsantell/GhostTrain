@@ -565,6 +565,8 @@ var parseURL = require('./url').parse;
  * @param {Object} (params)
  *   - {Number} delay: Number of ms to wait before executing routing (default: 0)
  *   - {Object} body: Object representing POST body data (default: {})
+ *   - {Object} headers: Object of pairings of header values
+ *   - {String} contentType: Sets headers for `Content-Type`
  * @param {Function} callback
  */
 
@@ -583,11 +585,24 @@ function send (ghosttrain, verb, url, params, callback) {
   if (!params)
     params = {};
 
+  // Clone `params` to `options
+  var options = {};
+  for (var prop in params)
+    options[prop] = params[prop];
+
+
+  // Set up optoins
+  if (!options.headers)
+    options.headers = {};
+
+  if (options.contentType)
+    options.headers['Content-Type'] = options.contentType;
+
   var route = findRoute(ghosttrain, verb, url);
 
   function execute () {
     if (route) {
-      req = new Request(ghosttrain, route, url, params);
+      req = new Request(ghosttrain, route, url, options);
       res = new Response(ghosttrain, success);
       route.callback(req, res);
     } else {
@@ -597,7 +612,7 @@ function send (ghosttrain, verb, url, params, callback) {
   }
 
   // Ensure the processing is asynchronous
-  setTimeout(execute, params.delay || 1);
+  setTimeout(execute, options.delay || 1);
 
   function success (data) {
     if (!callback) return;
