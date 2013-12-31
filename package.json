@@ -29,9 +29,7 @@
       "safari": [5.1, 6]
     },
     "harness": "mocha",
-    "scripts": [
-      "dist/ghosttrain.js",
-      "test/testlingSetup.js",
+    "files": [
       "test/test.*.js"
     ]
   }
