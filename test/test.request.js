@@ -361,7 +361,7 @@ describe('Request', function () {
           testProps('GET', '/', function (req, res) {
             expect(function () {
               req[prop];
-            }).to.throw(Error);
+            }).to['throw'](Error);
             done();
           });
         });
@@ -382,7 +382,7 @@ describe('Request', function () {
         testProps('GET', '/', function (req, res) {
           expect(function () {
             req[prop]();
-          }).to.throw(Error);
+          }).to['throw'](Error);
           done();
         });
       });
