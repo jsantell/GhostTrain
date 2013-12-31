@@ -48,7 +48,7 @@ describe('Routing', function () {
     it('GhostTrain#delete(path, callback)', function (done) {
       var gt = new GhostTrain();
 
-      gt.delete('/users', function (req, res) {
+      gt['delete']('/users', function (req, res) {
         res.send('response');
       });
 
