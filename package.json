@@ -27,7 +27,6 @@
     },
     "harness": "mocha",
     "scripts": [
-      "node_modules/chai/chai.js",
       "dist/ghosttrain.js",
       "test/testlingSetup.js",
       "test/test.*.js"
