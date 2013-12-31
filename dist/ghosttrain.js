@@ -162,6 +162,8 @@ function Request (ghosttrain, route, url, options) {
   this.params = route.params;
   this.body = options.body || {};
   this.headers = options.headers || {};
+
+  this.xhr = 'xmlhttprequest' === (this.get('X-Requested-With') || '').toLowerCase();
 }
 module.exports = Request;
 
@@ -270,10 +272,6 @@ Request.prototype.param = function (name, defaultValue) {
   return defaultValue;
 };
 
-Object.__defineGetter__.call(Request.prototype, 'xhr', function() {
-  return 'xmlhttprequest' === (this.get('X-Requested-With') || '').toLowerCase();
-});
-
 /**
  * Set up unsupported functions
  */
@@ -282,12 +280,18 @@ Object.__defineGetter__.call(Request.prototype, 'xhr', function() {
 });
 
 /**
- * Set up unsupported getters
+ * Set up unsupported getters; on browsers that do not support getters, just
+ * ignore and do not throw errors as this is only a "nice to have" feature
  */
-['subdomains', 'stale', 'fresh', 'ip', 'ips', 'auth',
-  'accepted', 'acceptedEncodings', 'acceptedCharsets', 'acceptedLanguages'].forEach(function (prop) {
-  Object.__defineGetter__.call(Request.prototype, prop, unsupported('req.' + prop));
-});
+if (Object.defineProperty) {
+  ['subdomains', 'stale', 'fresh', 'ip', 'ips', 'auth',
+      'accepted', 'acceptedEncodings', 'acceptedCharsets',
+      'acceptedLanguages'].forEach(function (prop) {
+    Object.defineProperty(Request.prototype, prop, {
+      get: unsupported('req.' + prop)
+    });
+  });
+}
 
 },{"./url":8,"./utils":9,"range-parser":13,"simple-mime":14}],5:[function(require,module,exports){
 var mime = require('simple-mime')();

@@ -355,20 +355,29 @@ describe('Request', function () {
   describe('Unsupported properties', function () {
     ['subdomains', 'stale', 'fresh', 'ip', 'ips', 'auth',
       'accepted', 'acceptedEncodings', 'acceptedCharsets', 'acceptedLanguages'].forEach(function (prop) {
-      it('accessing `req.'+prop+ '` throws', function (done) {
-        testProps('GET', '/', function (req, res) {
-          expect(function () {
-            req[prop];
-          }).to.throw(Error);
-          done();
+      if (Object.defineProperty) {
+        it('accessing `req.' + prop + '` throws on supported browsers', function (done) {
+          testProps('GET', '/', function (req, res) {
+            expect(function () {
+              req[prop];
+            }).to.throw(Error);
+            done();
+          });
         });
-      });
+      } else {
+        it('accessing `req.' + prop + '` is undefined because browser does not support `Object.defineProperty`', function (done) {
+          testProps('GET', '/', function (req, res) {
+            expect(req[prop]).to.be.equal(undefined);
+            done();
+          });
+        });
+      }
     });
   });
 
   describe('Unsupported methods', function () {
     ['accepts', 'acceptsEncoding', 'acceptsCharset', 'acceptsLanguage'].forEach(function (prop) {
-      it('Calling `req.'+prop+ '()` throws', function (done) {
+      it('Calling `req.' + prop + '()` throws', function (done) {
         testProps('GET', '/', function (req, res) {
           expect(function () {
             req[prop]();
