@@ -1,3 +1,6 @@
+var GhostTrain = require('..');
+var expect = require('chai').expect;
+
 describe('Request', function () {
   describe('properties', function () {
 
@@ -128,7 +131,8 @@ describe('Request', function () {
       });
       it('returns local page\'s protocol for relative links', function (done) {
         testProps('GET', '/path/to/yeah', function (req, res) {
-          expect(req.protocol).to.be.equal(window.location.protocol.replace(':',''));
+          var protocol = 'window' in this ? window.location.protocol : '';
+          expect(req.protocol).to.be.equal(protocol.replace(':',''));
           done();
         });
       });

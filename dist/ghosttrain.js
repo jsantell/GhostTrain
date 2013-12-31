@@ -145,11 +145,15 @@ function Request (ghosttrain, route, url, options) {
   // Headers info
   this.headers = options.headers || {};
 
+  // Allows us to check protocol of client-side requests,
+  // but relative requests won't have a protocol
+  var protocol = 'window' in this ? window.location.protocol : '';
+
   // Expose URL properties
   var parsedURL = parseURL(url, true);
   this.path = parsedURL.pathname;
   this.query = parsedURL.query;
-  this.protocol = (parsedURL.protocol || window.location.protocol).replace(':', '');
+  this.protocol = (parsedURL.protocol || protocol).replace(':', '');
   this.secure = this.protocol === 'https';
   
   this.route = route;

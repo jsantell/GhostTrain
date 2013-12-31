@@ -1,3 +1,6 @@
+var GhostTrain = require('..');
+var expect = require('chai').expect;
+
 describe('Routing', function () {
   describe('GhostTrain#VERB', function () {
     it('GhostTrain#post(path, callback)', function (done) {

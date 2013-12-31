@@ -17,6 +17,9 @@
   },
   "author": "Jordan Santell",
   "license": "MIT",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha --reporter spec --ui bdd"
+  },
   "testling": {
     "browsers": {
       "ie": [8, 9, 10],
