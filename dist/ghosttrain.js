@@ -5,18 +5,14 @@ module.exports = require('./lib/ghosttrain');
 var utils = require('./utils');
 var Route = require('./route');
 var send = require('./send');
+var methods = require('./methods');
 
 /**
  * GhostTrain constructor
  */
 
 function GhostTrain () {
-  this.routes = {
-    'get': [],
-    'post': [],
-    'put': [],
-    'delete': []
-  };
+  this.routes = {};
 
   this.settings = {
     'case sensitive routing': false,
@@ -37,16 +33,18 @@ module.exports = GhostTrain;
  * @param {Function} function
  */
 
-['post', 'put', 'delete'].forEach(function (verb) {
-  GhostTrain.prototype[verb] = addRoute(verb);
+methods.forEach(function (verb) {
+  if (verb === 'get') {
+    GhostTrain.prototype.get = function () {
+      if (arguments.length === 1)
+        return this.settings[arguments[0]];
+      else
+        return addRoute('get').apply(this, utils.arrayify(arguments));
+    };
+  } else {
+    GhostTrain.prototype[verb] = addRoute(verb);
+  }
 });
-
-GhostTrain.prototype.get = function () {
-  if (arguments.length === 1)
-    return this.settings[arguments[0]];
-  else
-    return addRoute('get').apply(this, utils.arrayify(arguments));
-};
 
 /**
  * Set a configuration setting on the GhostTrain instance
@@ -89,6 +87,10 @@ GhostTrain.prototype.send = function () {
 
 function addRoute (verb) {
   return function (path, fn) {
+    // Support all HTTP verbs
+    if (!this.routes[verb])
+      this.routes[verb] = [];
+
     this.routes[verb].push(new Route(verb, path, fn, {
       sensitive: this.settings['case sensitive routing'],
       strict: this.settings['strict routing']
@@ -96,7 +98,36 @@ function addRoute (verb) {
   };
 }
 
-},{"./route":5,"./send":6,"./utils":8}],3:[function(require,module,exports){
+},{"./methods":3,"./route":6,"./send":7,"./utils":9}],3:[function(require,module,exports){
+// From https://github.com/visionmedia/node-methods
+module.exports = [
+  'get',
+  'post',
+  'put',
+  'head',
+  'delete',
+  'options',
+  'trace',
+  'copy',
+  'lock',
+  'mkcol',
+  'move',
+  'propfind',
+  'proppatch',
+  'unlock',
+  'report',
+  'mkactivity',
+  'checkout',
+  'merge',
+  'm-search',
+  'notify',
+  'subscribe',
+  'unsubscribe',
+  'patch',
+  'search'
+];
+
+},{}],4:[function(require,module,exports){
 var mime = require('simple-mime')();
 var parseRange = require('range-parser');
 var parseURL = require('./url').parse;
@@ -116,9 +147,9 @@ function Request (ghosttrain, route, url, options) {
 
   // Expose URL properties
   var parsedURL = parseURL(url, true);
-  this.path = parsedURL.path;
+  this.path = parsedURL.pathname;
   this.query = parsedURL.query;
-  this.protocol = parsedURL.protocol;
+  this.protocol = (parsedURL.protocol || window.location.protocol).replace(':', '');
   this.secure = this.protocol === 'https';
   
   this.route = route;
@@ -184,6 +215,7 @@ Request.prototype.range = function(size){
 
 Request.prototype.is = function (type) {
   var ct = this.get('Content-Type');
+  if (!type) return false;
   if (!ct) return false;
   ct = ct.split(';')[0];
   if (!~type.indexOf('/')) type = mime(type);
@@ -253,7 +285,7 @@ Object.__defineGetter__.call(Request.prototype, 'xhr', function() {
   Object.__defineGetter__.call(Request.prototype, prop, unsupported('req.' + prop));
 });
 
-},{"./url":7,"./utils":8,"range-parser":12,"simple-mime":13}],4:[function(require,module,exports){
+},{"./url":8,"./utils":9,"range-parser":13,"simple-mime":14}],5:[function(require,module,exports){
 var mime = require('simple-mime')();
 var utils = require('./utils');
 var unsupported = utils.unsupported;
@@ -305,7 +337,6 @@ Response.prototype = {
     if (!body)
       body = utils.STATUS_CODES[this.statusCode];
 
-    console.log(body);
     this.end(body);
     return this;
   },
@@ -453,7 +484,7 @@ Response.prototype = {
   Response.prototype[prop] = unsupported('res.' + prop + '()');
 });
 
-},{"./utils":8,"simple-mime":13}],5:[function(require,module,exports){
+},{"./utils":9,"simple-mime":14}],6:[function(require,module,exports){
 var utils = require('./utils');
 
 /**
@@ -518,7 +549,7 @@ Route.prototype.match = function(path){
   return true;
 };
 
-},{"./utils":8}],6:[function(require,module,exports){
+},{"./utils":9}],7:[function(require,module,exports){
 var Request = require('./request');
 var Response = require('./response');
 var parseURL = require('./url').parse;
@@ -548,6 +579,10 @@ function send (ghosttrain, verb, url, params, callback) {
     params = {};
   }
 
+  // Allow optional `params` and `callback`
+  if (!params)
+    params = {};
+
   var route = findRoute(ghosttrain, verb, url);
 
   function execute () {
@@ -556,7 +591,8 @@ function send (ghosttrain, verb, url, params, callback) {
       res = new Response(ghosttrain, success);
       route.callback(req, res);
     } else {
-      callback('404: No route found.', null, null);
+      if (callback)
+        callback('404: No route found.', null, null);
     }
   }
 
@@ -564,6 +600,7 @@ function send (ghosttrain, verb, url, params, callback) {
   setTimeout(execute, params.delay || 1);
 
   function success (data) {
+    if (!callback) return;
     if (res.statusCode !== 200)
       callback(data, render(req, res, data), null);
     else
@@ -583,6 +620,7 @@ module.exports = send;
 
 function findRoute (ghosttrain, verb, path) {
   var routes = ghosttrain.routes[verb];
+  if (!routes) return null;
   for (var i = 0; i < routes.length; i++)
     if (routes[i].match(path))
       return routes[i];
@@ -622,7 +660,7 @@ function render (req, res, body) {
   return response;
 }
 
-},{"./request":3,"./response":4,"./url":7}],7:[function(require,module,exports){
+},{"./request":4,"./response":5,"./url":8}],8:[function(require,module,exports){
 /**
  * Node.js's `url.parse` implementation from
  * https://github.com/isaacs/node-url/
@@ -752,7 +790,7 @@ function parseHost(host) {
   return out;
 }
 
-},{"querystring":11}],8:[function(require,module,exports){
+},{"querystring":12}],9:[function(require,module,exports){
 /**
  * A function that takes a `name` that returns a function
  * that throws an error regarding an unsupported function of `name`, 
@@ -885,7 +923,7 @@ var STATUS_CODES = exports.STATUS_CODES = {
   511 : 'Network Authentication Required' // RFC 6585
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -971,7 +1009,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1058,13 +1096,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":9,"./encode":10}],12:[function(require,module,exports){
+},{"./decode":10,"./encode":11}],13:[function(require,module,exports){
 
 /**
  * Parse "Range" header `str` relative to the given file `size`.
@@ -1114,7 +1152,7 @@ module.exports = function(size, str){
 
   return valid ? arr : -1;
 };
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 // A simple mime database.
 var types;
 module.exports = function setup(defaultMime) {
