@@ -5,7 +5,7 @@ all: browserify min
 
 browserify:
 	mkdir -p ./dist
-	node $(BROWSERIFY) -t brfs --standalone GhostTrain ./index.js > ./dist/ghosttrain.js
+	node $(BROWSERIFY) --standalone GhostTrain ./index.js > ./dist/ghosttrain.js
 
 min:
 	node $(UGLIFY) ./dist/ghosttrain.js -o ./dist/ghosttrain.min.js
