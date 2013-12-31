@@ -19,12 +19,8 @@ exports.get = function get (obj, prop, func) {
       Object.defineProperty(obj, prop, {
         get: func
       });
-      return true;
-    } catch (e) {
-      return false;
-    }
+    } catch (e) {}
   }
-  return false;
 };
 
 /**
@@ -34,7 +30,9 @@ exports.get = function get (obj, prop, func) {
  */
 
 exports.isSupported = function isSupported () {
-  return exports.get({}, 'supported', function (){});
+  var obj = {};
+  exports.get(obj, 'supported', function () { return true });
+  return obj.supported;
 };
 
 },{}],3:[function(require,module,exports){
