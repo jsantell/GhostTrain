@@ -1,7 +1,43 @@
 !function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.GhostTrain=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = require('./lib/ghosttrain');
 
-},{"./lib/ghosttrain":2}],2:[function(require,module,exports){
+},{"./lib/ghosttrain":3}],2:[function(require,module,exports){
+/**
+ * Wraps `Object.defineProperty` for browsers that support it,
+ * and fails silently if unsupported.
+ *
+ * @param {Object} object
+ * @param {String} prop
+ * @param {Function} func
+ */
+
+exports.get = function get (obj, prop, func) {
+  if (Object.defineProperty) {
+    // Wrap in `try` since IE8 has `defineProperty` but only works
+    // on DOM nodes
+    try {
+      Object.defineProperty(obj, prop, {
+        get: func
+      });
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  return false;
+};
+
+/**
+ * Returns a boolean indicating getter support.
+ *
+ * @return {Boolean}
+ */
+
+exports.isSupported = function isSupported () {
+  return exports.get({}, 'supported', function (){});
+};
+
+},{}],3:[function(require,module,exports){
 var utils = require('./utils');
 var Route = require('./route');
 var send = require('./send');
@@ -98,7 +134,7 @@ function addRoute (verb) {
   };
 }
 
-},{"./methods":3,"./route":6,"./send":7,"./utils":9}],3:[function(require,module,exports){
+},{"./methods":4,"./route":7,"./send":8,"./utils":10}],4:[function(require,module,exports){
 // From https://github.com/visionmedia/node-methods
 module.exports = [
   'get',
@@ -127,11 +163,12 @@ module.exports = [
   'search'
 ];
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var mime = require('simple-mime')();
 var parseRange = require('range-parser');
 var parseURL = require('./url').parse;
 var unsupported = require('./utils').unsupported;
+var get = require('./get').get;
 
 /**
  * Take formatted options and creates an Express style `req` object
@@ -283,17 +320,13 @@ Request.prototype.param = function (name, defaultValue) {
  * Set up unsupported getters; on browsers that do not support getters, just
  * ignore and do not throw errors as this is only a "nice to have" feature
  */
-if (Object.defineProperty) {
-  ['subdomains', 'stale', 'fresh', 'ip', 'ips', 'auth',
-      'accepted', 'acceptedEncodings', 'acceptedCharsets',
-      'acceptedLanguages'].forEach(function (prop) {
-    Object.defineProperty(Request.prototype, prop, {
-      get: unsupported('req.' + prop)
-    });
-  });
-}
+ ['subdomains', 'stale', 'fresh', 'ip', 'ips', 'auth',
+   'accepted', 'acceptedEncodings', 'acceptedCharsets',
+   'acceptedLanguages'].forEach(function (prop) {
+  get(Request.prototype, prop, unsupported('req.' + prop));
+});
 
-},{"./url":8,"./utils":9,"range-parser":13,"simple-mime":14}],5:[function(require,module,exports){
+},{"./get":2,"./url":9,"./utils":10,"range-parser":14,"simple-mime":15}],6:[function(require,module,exports){
 var mime = require('simple-mime')();
 var utils = require('./utils');
 var unsupported = utils.unsupported;
@@ -492,7 +525,7 @@ Response.prototype = {
   Response.prototype[prop] = unsupported('res.' + prop + '()');
 });
 
-},{"./utils":9,"simple-mime":14}],6:[function(require,module,exports){
+},{"./utils":10,"simple-mime":15}],7:[function(require,module,exports){
 var utils = require('./utils');
 
 /**
@@ -557,7 +590,7 @@ Route.prototype.match = function(path){
   return true;
 };
 
-},{"./utils":9}],7:[function(require,module,exports){
+},{"./utils":10}],8:[function(require,module,exports){
 var Request = require('./request');
 var Response = require('./response');
 var parseURL = require('./url').parse;
@@ -683,7 +716,7 @@ function render (req, res, body) {
   return response;
 }
 
-},{"./request":4,"./response":5,"./url":8}],8:[function(require,module,exports){
+},{"./request":5,"./response":6,"./url":9}],9:[function(require,module,exports){
 /**
  * Node.js's `url.parse` implementation from
  * https://github.com/isaacs/node-url/
@@ -813,7 +846,7 @@ function parseHost(host) {
   return out;
 }
 
-},{"querystring":12}],9:[function(require,module,exports){
+},{"querystring":13}],10:[function(require,module,exports){
 /**
  * A function that takes a `name` that returns a function
  * that throws an error regarding an unsupported function of `name`, 
@@ -946,7 +979,7 @@ var STATUS_CODES = exports.STATUS_CODES = {
   511 : 'Network Authentication Required' // RFC 6585
 };
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1032,7 +1065,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1119,13 +1152,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":10,"./encode":11}],13:[function(require,module,exports){
+},{"./decode":11,"./encode":12}],14:[function(require,module,exports){
 
 /**
  * Parse "Range" header `str` relative to the given file `size`.
@@ -1175,7 +1208,7 @@ module.exports = function(size, str){
 
   return valid ? arr : -1;
 };
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 // A simple mime database.
 var types;
 module.exports = function setup(defaultMime) {

@@ -1,5 +1,6 @@
 var GhostTrain = require('..');
 var expect = require('chai').expect;
+var getSupported = require('../lib/get').isSupported;
 
 describe('Request', function () {
   describe('properties', function () {
@@ -355,7 +356,7 @@ describe('Request', function () {
   describe('Unsupported properties', function () {
     ['subdomains', 'stale', 'fresh', 'ip', 'ips', 'auth',
       'accepted', 'acceptedEncodings', 'acceptedCharsets', 'acceptedLanguages'].forEach(function (prop) {
-      if (Object.defineProperty) {
+      if (getSupported()) {
         it('accessing `req.' + prop + '` throws on supported browsers', function (done) {
           testProps('GET', '/', function (req, res) {
             expect(function () {
