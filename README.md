@@ -1,5 +1,6 @@
 # GhostTrain
 
+[![Build Status](https://travis-ci.org/jsantell/GhostTrain.png)](https://travis-ci.org/jsantell/GhostTrain)
 [![browser support](https://ci.testling.com/jsantell/GhostTrain.png)](https://ci.testling.com/jsantell/GhostTrain)
 
 Client-side router in the spirit of [Express](http://expressjs.com) for mock data, development and demos.
