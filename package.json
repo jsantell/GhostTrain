@@ -1,19 +1,19 @@
 {
   "name": "ghosttrain",
   "version": "0.1.0",
-  "description": "Client-side router in the spirit of [Express](http://expressjs.com) for mock data, development and demos.",
+  "description": "Client-side router in the spirit of Express, for mock data, development and demos.",
   "main": "index.js",
   "repository": "http://github.com/jsantell/GhostTrain",
   "dependencies": {
-    "querystring": "*",
+    "querystring": "0.2.0",
     "range-parser": "1.0.0",
-    "simple-mime": "*"
+    "simple-mime": "0.0.8"
   },
   "devDependencies": {
-    "mocha": "*",
-    "chai": "*",
-    "browserify": "*",
-    "uglify-js": "*"
+    "mocha": "1.16.2",
+    "chai": "1.8.1",
+    "browserify": "3.18.0",
+    "uglify-js": "2.4.8"
   },
   "author": "Jordan Santell",
   "license": "MIT",
