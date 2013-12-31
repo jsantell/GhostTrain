@@ -40,6 +40,7 @@ var utils = require('./utils');
 var Route = require('./route');
 var send = require('./send');
 var methods = require('./methods');
+var each = require('foreach-shim');
 
 /**
  * GhostTrain constructor
@@ -67,7 +68,7 @@ module.exports = GhostTrain;
  * @param {Function} function
  */
 
-methods.forEach(function (verb) {
+each(methods, function (verb) {
   if (verb === 'get') {
     GhostTrain.prototype.get = function () {
       if (arguments.length === 1)
@@ -132,7 +133,7 @@ function addRoute (verb) {
   };
 }
 
-},{"./methods":4,"./route":7,"./send":8,"./utils":10}],4:[function(require,module,exports){
+},{"./methods":4,"./route":7,"./send":8,"./utils":10,"foreach-shim":12}],4:[function(require,module,exports){
 // From https://github.com/visionmedia/node-methods
 module.exports = [
   'get',
@@ -167,6 +168,7 @@ var parseRange = require('range-parser');
 var parseURL = require('./url').parse;
 var unsupported = require('./utils').unsupported;
 var get = require('./get').get;
+var each = require('foreach-shim');
 
 /**
  * Take formatted options and creates an Express style `req` object
@@ -310,7 +312,7 @@ Request.prototype.param = function (name, defaultValue) {
 /**
  * Set up unsupported functions
  */
-['accepts', 'acceptsEncoding', 'acceptsCharset', 'acceptsLanguage'].forEach(function (prop) {
+each(['accepts', 'acceptsEncoding', 'acceptsCharset', 'acceptsLanguage'], function (prop) {
   Request.prototype[prop] = unsupported('req.' + prop + '()');
 });
 
@@ -318,16 +320,18 @@ Request.prototype.param = function (name, defaultValue) {
  * Set up unsupported getters; on browsers that do not support getters, just
  * ignore and do not throw errors as this is only a "nice to have" feature
  */
- ['subdomains', 'stale', 'fresh', 'ip', 'ips', 'auth',
+each(['subdomains', 'stale', 'fresh', 'ip', 'ips', 'auth',
    'accepted', 'acceptedEncodings', 'acceptedCharsets',
-   'acceptedLanguages'].forEach(function (prop) {
+   'acceptedLanguages'], function (prop) {
   get(Request.prototype, prop, unsupported('req.' + prop));
 });
 
-},{"./get":2,"./url":9,"./utils":10,"range-parser":14,"simple-mime":15}],6:[function(require,module,exports){
+},{"./get":2,"./url":9,"./utils":10,"foreach-shim":12,"range-parser":16,"simple-mime":17}],6:[function(require,module,exports){
 var mime = require('simple-mime')();
 var utils = require('./utils');
 var unsupported = utils.unsupported;
+var each = require('foreach-shim');
+var map = require('array-map');
 
 /**
  * Shims features of Express's `response` object in routes.
@@ -478,7 +482,7 @@ Response.prototype = {
   links: function (links){
     var link = this.get('Link') || '';
     if (link) link += ', ';
-    return this.set('Link', link + Object.keys(links).map(function(rel){
+    return this.set('Link', link + map(Object.keys(links), function(rel){
       return '<' + links[rel] + '>; rel="' + rel + '"';
     }).join(', '));
   },
@@ -518,12 +522,12 @@ Response.prototype = {
 /**
  * Set up unsupported functions
  */
-['clearCookie', 'cookie', 'attachment', 'jsonp', 'sendfile',
-  'download', 'format', 'location', 'redirect', 'vary', 'render'].forEach(function (prop) {
+each(['clearCookie', 'cookie', 'attachment', 'jsonp', 'sendfile',
+  'download', 'format', 'location', 'redirect', 'vary', 'render'], function (prop) {
   Response.prototype[prop] = unsupported('res.' + prop + '()');
 });
 
-},{"./utils":10,"simple-mime":15}],7:[function(require,module,exports){
+},{"./utils":10,"array-map":11,"foreach-shim":12,"simple-mime":17}],7:[function(require,module,exports){
 var utils = require('./utils');
 
 /**
@@ -592,6 +596,7 @@ Route.prototype.match = function(path){
 var Request = require('./request');
 var Response = require('./response');
 var parseURL = require('./url').parse;
+var each = require('foreach-shim');
 
 /**
  * Called from `GhostTrain#send`, makes the request via the routing service.
@@ -700,12 +705,12 @@ function render (req, res, body) {
     response[prop] = parsedURL[prop];
 
   // Append select `req` properties
-  ['method', 'url'].forEach(function (prop) {
+  each(['method', 'url'], function (prop) {
     response[prop] = req[prop];
   });
 
   // Append select `res` properties
-  ['headers', 'statusCode'].forEach(function (prop) {
+  each(['headers', 'statusCode'], function (prop) {
     response[prop] = res[prop];
   });
 
@@ -714,7 +719,7 @@ function render (req, res, body) {
   return response;
 }
 
-},{"./request":5,"./response":6,"./url":9}],9:[function(require,module,exports){
+},{"./request":5,"./response":6,"./url":9,"foreach-shim":12}],9:[function(require,module,exports){
 /**
  * Node.js's `url.parse` implementation from
  * https://github.com/isaacs/node-url/
@@ -844,7 +849,7 @@ function parseHost(host) {
   return out;
 }
 
-},{"querystring":13}],10:[function(require,module,exports){
+},{"querystring":15}],10:[function(require,module,exports){
 /**
  * A function that takes a `name` that returns a function
  * that throws an error regarding an unsupported function of `name`, 
@@ -978,6 +983,28 @@ var STATUS_CODES = exports.STATUS_CODES = {
 };
 
 },{}],11:[function(require,module,exports){
+module.exports = function (xs, f) {
+    if (xs.map) return xs.map(f);
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        var x = xs[i];
+        if (hasOwn.call(xs, i)) res.push(f(x, i, xs));
+    }
+    return res;
+};
+
+var hasOwn = Object.prototype.hasOwnProperty;
+
+},{}],12:[function(require,module,exports){
+"use strict";
+
+module.exports = function(arr, callback, context) {
+    for (var i = 0, l = arr.length; i < l; i++) {
+        callback.call(context, arr[i], i, arr);
+    }
+};
+
+},{}],13:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1063,7 +1090,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],12:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1150,13 +1177,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":11,"./encode":12}],14:[function(require,module,exports){
+},{"./decode":13,"./encode":14}],16:[function(require,module,exports){
 
 /**
  * Parse "Range" header `str` relative to the given file `size`.
@@ -1206,7 +1233,7 @@ module.exports = function(size, str){
 
   return valid ? arr : -1;
 };
-},{}],15:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 // A simple mime database.
 var types;
 module.exports = function setup(defaultMime) {
