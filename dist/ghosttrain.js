@@ -891,7 +891,7 @@ exports.arrayify = arrayify;
  */
 
 function pathRegexp (path, keys, sensitive, strict) {
-  if (toString.call(path) == '[object RegExp]') return path;
+  if (Object.prototype.toString.call(path) == '[object RegExp]') return path;
   if (Array.isArray(path)) path = '(' + path.join('|') + ')';
   path = path
     .concat(strict ? '' : '/?')
