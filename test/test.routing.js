@@ -24,7 +24,7 @@ describe('Routing', function () {
   describe('General Routing', function () {
     it('uses best matching route', function (done) {
       var gt = new GhostTrain();
-      var data = {};
+      var data = 'response';
 
       gt.get('/', function (req, res) {
         res.send(400);
@@ -42,22 +42,6 @@ describe('Routing', function () {
         expect(err).to.not.be.ok;
         expect(body).to.be.equal(data);
         done();
-      });
-    });
-
-    [301, 404, 500].forEach(function (status) {
-      it('fails request when responding with status code ' + status, function (done) {
-        var gt = new GhostTrain();
-
-        gt.get('/users/:id', function (req, res) {
-          res.send(status);
-        });
-
-        gt.request('GET', '/users/12345', function (err, res, body) {
-          expect(err).to.be.ok;
-          expect(body).to.not.be.ok;
-          done();
-        });
       });
     });
 

@@ -334,7 +334,7 @@ function Response (ghosttrain, callback) {
   this.statusCode = 200;
 
   this.app = ghosttrain;
-  this.end = callback;
+  this._callback = callback;
 }
 module.exports = Response;
 
@@ -356,6 +356,9 @@ Response.prototype = {
 
   send: function () {
     var body;
+    var app = this.app;
+
+    // If status provide, set that, and set `body` to the content correctly
     if (typeof arguments[0] === 'number') {
       this.status(arguments[0]);
       body = arguments[1];
@@ -363,8 +366,30 @@ Response.prototype = {
       body = arguments[0];
     }
 
-    if (!body)
+    var type = this.get('Content-Type');
+
+    if (!body && type !== 'application/json') {
       body = utils.STATUS_CODES[this.statusCode];
+      if (!type)
+        this.type('txt');
+    }
+    else if (typeof body === 'string') {
+      if (!type) {
+        this.charset = this.charset || 'utf-8';
+        this.type('html');
+      }
+    }
+    else if (typeof body === 'object') {
+      if (body === null)
+        body = '';
+      else if (!type || type === 'application/json') {
+        this.contentType('application/json');
+        // Cast object to string to normalize response
+        var replacer = app.get('json replacer');
+        var spaces = app.get('json spaces');
+        body = JSON.stringify(body, replacer, spaces);
+      }
+    }
 
     this.end(body);
     return this;
@@ -393,12 +418,10 @@ Response.prototype = {
       data = arguments[0];
     }
 
-    var app = this.app;
-    var replacer = app.get('json replacer');
-    var spaces = app.get('json spaces');
-    var body = JSON.stringify(data, replacer, spaces);
+    if (!this.get('Content-Type'))
+      this.contentType('application/json');
 
-    return this.send(body);
+    return this.send(data);
   },
 
   /**
@@ -501,6 +524,21 @@ Response.prototype = {
 
   type: function (type) {
     return this.contentType(type);
+  },
+
+  /**
+   * Formats response and calls initial callback
+   *
+   * @param {String} body
+   */
+
+  end: function (body) {
+    var type = this.get('Content-Type');
+
+    if (type === 'application/json')
+      this._callback(JSON.parse(body || '{}'));
+    else
+      this._callback(body);
   }
 
 };
@@ -646,10 +684,8 @@ function send (ghosttrain, verb, url, params, callback) {
 
   function success (data) {
     if (!callback) return;
-    if (res.statusCode !== 200)
-      callback(data, render(req, res, data), null);
-    else
-      callback(null, render(req, res, data), data);
+    // TODO error handling from router
+    callback(null, render(req, res, data), data);
   }
 }
 module.exports = send;
