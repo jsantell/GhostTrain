@@ -25,12 +25,12 @@ var users = {
 }
 
 ghosttrain.get('/users/:id', function (req, res) {
-  res.send(200, users[req.parms.id]);
+  res.request(200, users[req.parms.id]);
 });
 ```
 
 ```javascript
-ghosttrain.send('GET', '/users/12345', function (err, res, body) {
+ghosttrain.request('GET', '/users/12345', function (err, res, body) {
   console.log(body);
   // { name: 'Ozzie Isaacs', skills: ['Planet Riding'] }
   console.log(res.statusCode);
@@ -41,6 +41,18 @@ ghosttrain.send('GET', '/users/12345', function (err, res, body) {
 ## API
 
 ### GhostTrain()
+
+#### ghosttrain.request(method, path, [options], callback)
+
+Makes a request to the `GhostTrain` instance's router. Takes an HTTP `method`, `path`, optional `options` object, and a `callback` accepting an `err`, `res` and `body` in its arguments.
+
+Possible options are:
+
+* `delay`- Number of ms to wait before executing routing (default: `1`)
+* `body`- Object representing POST body data (default: `{}`)
+* `headers`- Object of pairings of header values (default: `{}`)
+* `contentType`- Sets headers for `Content-Type`
+
 
 #### ghosttrain.set(name, value)
 
@@ -66,10 +78,6 @@ Sets a setting value to `false`, similar to Express's [app.disable](http://expre
 #### ghosttrain.VERB(route, callback)
 
 Creates a route; VERB can be `get`, `post`, `put`, or `delete`, similar to Express's [app.verb](http://expressjs.com/api.html#app.VERB).
-
-#### ghosttrain.sync()
-
-Returns a replacement function for `Backbone.sync` to be used in Backbone.models.
 
 ### Request
 

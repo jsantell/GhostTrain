@@ -37,8 +37,7 @@ exports.isSupported = function isSupported () {
 
 },{}],3:[function(require,module,exports){
 var utils = require('./utils');
-var Route = require('./route');
-var send = require('./send');
+var sendRequest = require('./sendRequest');
 var methods = require('./methods');
 var each = require('foreach-shim');
 
@@ -74,10 +73,10 @@ each(methods, function (verb) {
       if (arguments.length === 1)
         return this.settings[arguments[0]];
       else
-        return addRoute('get').apply(this, utils.arrayify(arguments));
+        return utils.addRoute('get').apply(this, utils.arrayify(arguments));
     };
   } else {
-    GhostTrain.prototype[verb] = addRoute(verb);
+    GhostTrain.prototype[verb] = utils.addRoute(verb);
   }
 });
 
@@ -116,24 +115,11 @@ GhostTrain.prototype.enable = function (key) {
  * Makes a request to the routing service.
  */
 
-GhostTrain.prototype.send = function () {
-  return send.apply(null, [this].concat(utils.arrayify(arguments)));
+GhostTrain.prototype.request = function () {
+  return sendRequest.apply(null, [this].concat(utils.arrayify(arguments)));
 };
 
-function addRoute (verb) {
-  return function (path, fn) {
-    // Support all HTTP verbs
-    if (!this.routes[verb])
-      this.routes[verb] = [];
-
-    this.routes[verb].push(new Route(verb, path, fn, {
-      sensitive: this.settings['case sensitive routing'],
-      strict: this.settings['strict routing']
-    }));
-  };
-}
-
-},{"./methods":4,"./route":7,"./send":8,"./utils":10,"foreach-shim":12}],4:[function(require,module,exports){
+},{"./methods":4,"./sendRequest":8,"./utils":10,"foreach-shim":12}],4:[function(require,module,exports){
 // From https://github.com/visionmedia/node-methods
 module.exports = [
   'get',
@@ -850,6 +836,30 @@ function parseHost(host) {
 }
 
 },{"querystring":15}],10:[function(require,module,exports){
+var Route = require('./route');
+
+/**
+ * Returns a function that acts as `app.VERB(path, route)`; helper function
+ * used in `./lib/ghosttrain.js`.
+ *
+ * @param {String} verb
+ * @return {Function{
+ */
+
+function addRoute (verb) {
+  return function (path, fn) {
+    // Support all HTTP verbs
+    if (!this.routes[verb])
+      this.routes[verb] = [];
+
+    this.routes[verb].push(new Route(verb, path, fn, {
+      sensitive: this.settings['case sensitive routing'],
+      strict: this.settings['strict routing']
+    }));
+  };
+}
+exports.addRoute = addRoute;
+
 /**
  * A function that takes a `name` that returns a function
  * that throws an error regarding an unsupported function of `name`, 
@@ -982,7 +992,7 @@ var STATUS_CODES = exports.STATUS_CODES = {
   511 : 'Network Authentication Required' // RFC 6585
 };
 
-},{}],11:[function(require,module,exports){
+},{"./route":7}],11:[function(require,module,exports){
 module.exports = function (xs, f) {
     if (xs.map) return xs.map(f);
     var res = [];

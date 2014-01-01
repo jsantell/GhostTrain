@@ -4,59 +4,19 @@ var expect = require('chai').expect;
 
 describe('Routing', function () {
   describe('GhostTrain#VERB', function () {
-    it('GhostTrain#post(path, callback)', function (done) {
-      var gt = new GhostTrain();
+    ['GET', 'POST', 'PUT', 'DELETE'].forEach(function (method) {
+      it('GhostTrain#' + method.toLowerCase() + '(path, callback)', function (done) {
+        var gt = new GhostTrain();
 
-      gt.post('/users', function (req, res) {
-        res.send('response');
-      });
+        gt[method.toLowerCase()]('/users', function (req, res) {
+          res.send('response');
+        });
 
-      gt.send('POST', '/users', function (err, res, data) {
-        expect(err).to.be.not.ok;
-        expect(data).to.be.equal('response');
-        done();
-      });
-    });
-
-    it('GhostTrain#get(path, callback)', function (done) {
-      var gt = new GhostTrain();
-
-      gt.get('/users', function (req, res) {
-        res.send('response');
-      });
-
-      gt.send('GET', '/users', function (err, res, data) {
-        expect(err).to.be.not.ok;
-        expect(data).to.be.equal('response');
-        done();
-      });
-    });
-
-    it('GhostTrain#put(path, callback)', function (done) {
-      var gt = new GhostTrain();
-
-      gt.put('/users', function (req, res) {
-        res.send('response');
-      });
-
-      gt.send('PUT', '/users', function (err, res, data) {
-        expect(err).to.be.not.ok;
-        expect(data).to.be.equal('response');
-        done();
-      });
-    });
-
-    it('GhostTrain#delete(path, callback)', function (done) {
-      var gt = new GhostTrain();
-
-      gt['delete']('/users', function (req, res) {
-        res.send('response');
-      });
-
-      gt.send('DELETE', '/users', function (err, res, data) {
-        expect(err).to.be.not.ok;
-        expect(data).to.be.equal('response');
-        done();
+        gt.request(method, '/users', function (err, res, data) {
+          expect(err).to.be.not.ok;
+          expect(data).to.be.equal('response');
+          done();
+        });
       });
     });
   });
@@ -69,7 +29,7 @@ describe('Routing', function () {
       gt.get('/', function (req, res) {
         res.send(400);
       });
-      
+
       gt.get('/users/:id', function (req, res) {
         res.send(200, data);
       });
@@ -78,7 +38,7 @@ describe('Routing', function () {
         res.send(400);
       });
 
-      gt.send('GET', '/users/12345', function (err, res, body) {
+      gt.request('GET', '/users/12345', function (err, res, body) {
         expect(err).to.not.be.ok;
         expect(body).to.be.equal(data);
         done();
@@ -93,12 +53,29 @@ describe('Routing', function () {
           res.send(status);
         });
 
-        gt.send('GET', '/users/12345', function (err, res, body) {
+        gt.request('GET', '/users/12345', function (err, res, body) {
           expect(err).to.be.ok;
           expect(body).to.not.be.ok;
           done();
         });
       });
+    });
+
+    it('makes the request on next tick', function (done) {
+      var gt = new GhostTrain();
+
+      var flag = false;
+
+      gt.get('/users', function (req, res) {
+        res.send('response');
+        expect(flag).to.be.equal(true);
+      });
+
+      gt.request('get', '/users', function (err, res, data) {
+        done();
+      });
+
+      flag = true;
     });
   });
 });

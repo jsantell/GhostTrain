@@ -16,7 +16,7 @@ describe('Request', function () {
           done();
         });
 
-        gt.send('GET', '/', {
+        gt.request('GET', '/', {
           headers: {
             'Content-Type': 'application/json',
             'User-Agent': 'hovercraft;v30.0.23;like-gecko'
@@ -42,7 +42,7 @@ describe('Request', function () {
           done();
         });
 
-        gt.send('GET', '/', { headers: {'X-Requested-With': 'xmlhttprequest'}}, function () {});
+        gt.request('GET', '/', { headers: {'X-Requested-With': 'xmlhttprequest'}}, function () {});
       });
       it('returns `false` when `X-Requested-With` is unset', function (done) {
         var gt = new GhostTrain();
@@ -51,7 +51,7 @@ describe('Request', function () {
           done();
         });
 
-        gt.send('GET', '/');
+        gt.request('GET', '/');
       });
     });
 
@@ -176,7 +176,7 @@ describe('Request', function () {
           res.send();
         });
 
-        gt.send('GET', '/users/long/user/12345', function (err, res) {
+        gt.request('GET', '/users/long/user/12345', function (err, res) {
           done();
         });
       });
@@ -191,7 +191,7 @@ describe('Request', function () {
           res.send();
         });
 
-        gt.send('GET', '/users/long/user/12345', function (err, res) {
+        gt.request('GET', '/users/long/user/12345', function (err, res) {
           done();
         });
       });
@@ -208,7 +208,7 @@ describe('Request', function () {
           res.send();
         });
 
-        gt.send('GET', '/users?name=justin%20timberlake&password=smoothpop', function (err, res, body) {
+        gt.request('GET', '/users?name=justin%20timberlake&password=smoothpop', function (err, res, body) {
           done();
         });
       });
@@ -222,7 +222,7 @@ describe('Request', function () {
           res.send();
         });
 
-        gt.send('GET', '/users', function (err, res, body) {
+        gt.request('GET', '/users', function (err, res, body) {
           done();
         });
       });
@@ -238,7 +238,7 @@ describe('Request', function () {
           res.send();
         });
 
-        gt.send('POST', '/users', {
+        gt.request('POST', '/users', {
           body: {
             name: 'Justin Timberlake',
             jams: 'FutureSex/LoveSounds'
@@ -256,7 +256,7 @@ describe('Request', function () {
           res.send();
         });
 
-        gt.send('GET', '/users/12345', function (err, res) {
+        gt.request('GET', '/users/12345', function (err, res) {
           done();
         });
       });
@@ -274,7 +274,7 @@ describe('Request', function () {
         res.send();
       });
 
-      gt.send('POST', '/users/12345/show?q=myquery&id=123', {
+      gt.request('POST', '/users/12345/show?q=myquery&id=123', {
         body: { 'id': 789, 'name': 'dudedude' }
       }, function (err, res, body) {
         done();
@@ -300,7 +300,7 @@ describe('Request', function () {
         res.send();
       });
 
-      gt.send('GET', '/', {
+      gt.request('GET', '/', {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -320,7 +320,7 @@ describe('Request', function () {
         res.send();
       });
 
-      gt.send('GET', '/', {
+      gt.request('GET', '/', {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -339,7 +339,7 @@ describe('Request', function () {
           expect(req[method]('Content-Type')).to.be.equal('text/html');
           done();
         });
-        gt.send('GET', '/', { headers: { 'Content-Type': 'text/html' }}, function () {});
+        gt.request('GET', '/', { headers: { 'Content-Type': 'text/html' }}, function () {});
       });
 
       it('returns undefined for unset headers for req.' + method + '()', function (done) {
@@ -349,7 +349,7 @@ describe('Request', function () {
           expect(req[method]('X-Some-Header')).to.be.equal(undefined);
           done();
         });
-        gt.send('GET', '/', { headers: { 'Content-Type': 'text/html' }}, function () {});
+        gt.request('GET', '/', { headers: { 'Content-Type': 'text/html' }}, function () {});
       });
     });
   });
@@ -394,5 +394,5 @@ describe('Request', function () {
 function testProps (method, url, callback) {
   var gt = new GhostTrain();
   gt[method.toLowerCase()](url, callback);
-  gt.send(method, url, function () {});
+  gt.request(method, url, function () {});
 }
