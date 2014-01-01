@@ -1,6 +1,6 @@
 require('./setup');
 var GhostTrain = require('..');
-var expect = require('chai').expect;
+var expect = require('expect.js');
 
 describe('Routing', function () {
   describe('GhostTrain#VERB', function () {
@@ -13,7 +13,7 @@ describe('Routing', function () {
         });
 
         gt.request(method, '/users', function (err, res, data) {
-          expect(err).to.be.not.ok;
+          expect(err).to.not.be.ok();
           expect(data).to.be.equal('response');
           done();
         });
@@ -39,7 +39,7 @@ describe('Routing', function () {
       });
 
       gt.request('GET', '/users/12345', function (err, res, body) {
-        expect(err).to.not.be.ok;
+        expect(err).to.not.be.ok();
         expect(body).to.be.equal(data);
         done();
       });

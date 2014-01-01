@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "mocha": "1.16.2",
-    "chai": "1.8.1",
+    "expect.js": "*",
     "browserify": "3.18.0",
     "uglify-js": "2.4.8"
   },

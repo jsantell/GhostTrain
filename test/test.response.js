@@ -1,7 +1,7 @@
 require('./setup');
 var GhostTrain = require('..');
 var STATUS_CODES = require('../lib/utils').STATUS_CODES;
-var expect = require('chai').expect;
+var expect = require('expect.js');
 
 describe('Response', function () {
   describe('properties', function () {
@@ -151,7 +151,7 @@ describe('Response', function () {
       run(function (req, res) {
         res.send(500, 'Some error occurred.');
       }, function (err, res, body) {
-        expect(err).to.not.be.ok;
+        expect(err).to.not.be.ok();
         expect(res.statusCode).to.be.equal(500);
         expect(res.headers['Content-Type']).to.be.equal('text/html');
         expect(body).to.be.equal('Some error occurred.');
@@ -163,7 +163,7 @@ describe('Response', function () {
       run(function (req, res) {
         res.send('hello there');
       }, function (err, res, body) {
-        expect(err).to.not.be.ok;
+        expect(err).to.not.be.ok();
         expect(res.statusCode).to.be.equal(200);
         expect(res.headers['Content-Type']).to.be.equal('text/html');
         expect(body).to.be.equal('hello there');
@@ -175,7 +175,7 @@ describe('Response', function () {
       run(function (req, res) {
         res.send(400, { name: 'boba fett' });
       }, function (err, res, body) {
-        expect(err).to.not.be.ok;
+        expect(err).to.not.be.ok();
         expect(res.statusCode).to.be.equal(400);
         expect(res.headers['Content-Type']).to.be.equal('application/json');
         expect(body.name).to.be.equal('boba fett');
@@ -187,7 +187,7 @@ describe('Response', function () {
       run(function (req, res) {
         res.send({ name: 'boba fett' });
       }, function (err, res, body) {
-        expect(err).to.not.be.ok;
+        expect(err).to.not.be.ok();
         expect(res.statusCode).to.be.equal(200);
         expect(res.headers['Content-Type']).to.be.equal('application/json');
         expect(body.name).to.be.equal('boba fett');
@@ -200,7 +200,7 @@ describe('Response', function () {
       run(function (req, res) {
         res.send(response);
       }, function (err, res, body) {
-        expect(err).to.not.be.ok;
+        expect(err).to.not.be.ok();
         expect(res.statusCode).to.be.equal(200);
         expect(res.headers['Content-Type']).to.be.equal('application/json');
         expect(body[0]).to.be.equal('a');
@@ -217,7 +217,7 @@ describe('Response', function () {
         res.send(response);
       }, function (err, res, body) {
         expect(body).to.not.be.equal(response);
-        expect(err).to.not.be.ok;
+        expect(err).to.not.be.ok();
         expect(res.statusCode).to.be.equal(200);
         expect(res.headers['Content-Type']).to.be.equal('application/json');
         expect(body.name).to.be.equal('boba fett');
@@ -230,7 +230,7 @@ describe('Response', function () {
       run(function (req, res) {
         res.send(response);
       }, function (err, res, body) {
-        expect(err).to.not.be.ok;
+        expect(err).to.not.be.ok();
         expect(res.statusCode).to.be.equal(200);
         expect(res.headers['Content-Type']).to.be.equal('application/json');
         expect(body[0]).to.be.equal('a');
@@ -246,7 +246,7 @@ describe('Response', function () {
         run(function (req, res) {
           res.send(statusCode);
         }, function (err, res, body) {
-          expect(err).to.not.be.ok;
+          expect(err).to.not.be.ok();
           expect(res.statusCode).to.be.equal(statusCode);
           expect(res.headers['Content-Type']).to.be.equal('text/plain');
           expect(body).to.be.equal(STATUS_CODES[statusCode]);

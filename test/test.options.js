@@ -1,6 +1,6 @@
 require('./setup');
 var GhostTrain = require('..');
-var expect = require('chai').expect;
+var expect = require('expect.js');
 
 describe('GhostTrain#request options', function () {
   /**

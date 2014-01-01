@@ -1,6 +1,6 @@
 require('./setup');
 var GhostTrain = require('..');
-var expect = require('chai').expect;
+var expect = require('expect.js');
 var getSupported = require('../lib/get').isSupported;
 
 describe('Request', function () {
@@ -362,7 +362,7 @@ describe('Request', function () {
           testProps('GET', '/', function (req, res) {
             expect(function () {
               req[prop];
-            }).to['throw'](Error);
+            }).to.throwError();
             done();
           });
         });
@@ -383,7 +383,7 @@ describe('Request', function () {
         testProps('GET', '/', function (req, res) {
           expect(function () {
             req[prop]();
-          }).to['throw'](Error);
+          }).to.throwError();
           done();
         });
       });
