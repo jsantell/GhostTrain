@@ -104,3 +104,16 @@ Send a JSON response; same API as Express's [res.json](http://expressjs.com/api.
 #### res.status(code)
 
 Sets the response status code to `code`, similar to Express's [res.status](http://expressjs.com/api.html#res.status).
+
+## Browser Support
+
+**GhostTrain** has been tested on latest versions of Firefox, Chrome, Safari, Opera, and IE8+. For IE8 support, several polyfills and APIs must be implemented; you can use the `./dist/ghosttrain-legacy.js` build which contains all these polyfills, or implement them on your own. The methods needed are:
+
+* `Array.prototype.indexOf`
+* `Array.prototype.map`
+* `Array.prototype.forEach`
+* `Array.isArray`
+* `String.prototype.trim`
+* `Object.keys`
+* `JSON.parse`
+* `JSON.stringify`
