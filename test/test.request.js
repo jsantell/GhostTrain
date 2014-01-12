@@ -2,6 +2,7 @@ require('./setup');
 var GhostTrain = require('..');
 var expect = require('expect.js');
 var getSupported = require('../lib/get').isSupported;
+var testMiddleware = require('./utils').testMiddleware;
 
 describe('Request', function () {
   describe('properties', function () {
@@ -26,7 +27,7 @@ describe('Request', function () {
       });
 
       it('defaults to {}', function (done) {
-        testProps('GET', '/', function (req, res) {
+        testMiddleware('GET', '/', function (req, res) {
           expect(req.headers).to.be.an('object');
           expect(Object.keys(req.headers)).to.have.length(0);
           done();
@@ -57,7 +58,7 @@ describe('Request', function () {
 
     describe('req.route', function () {
       it('contains the matching route', function (done) {
-        testProps('GET', '/dinosaurtown', function (req, res) {
+        testMiddleware('GET', '/dinosaurtown', function (req, res) {
           expect(req.route.path).to.be.equal('/dinosaurtown');
           expect(req.route.method).to.be.equal('get');
           done();
@@ -68,7 +69,7 @@ describe('Request', function () {
     describe('req.method', function () {
       ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'PATCH'].forEach(function (verb) {
         it('returns correct method for ' + verb, function (done) {
-          testProps(verb, '/', function (req, res) {
+          testMiddleware(verb, '/', function (req, res) {
             expect(req.method).to.be.equal(verb);
             done();
           });
@@ -77,35 +78,52 @@ describe('Request', function () {
     });
 
     describe('req.url, req.originalUrl', function () {
-      it('returns URL for absolute URL', function (done) {
-        var url = 'http://inflames.com/shredding/oh/yuh';
-        testProps('get', url, function (req, res) {
-          expect(req.url).to.be.equal(url);
-          expect(req.originalUrl).to.be.equal(url);
+      it('returns URL for relative URL with query', function (done) {
+        testMiddleware('get', '/path/to', '/path/to?q=myquery', function (req, res) {
+          expect(req.url).to.be.equal('/path/to?q=myquery');
+          expect(req.originalUrl).to.be.equal('/path/to?q=myquery');
           done();
         });
       });
-
-      it('returns URL for relative URL', function (done) {
-        var url = '/path/to/rocks';
-        testProps('get', url, function (req, res) {
-          expect(req.url).to.be.equal(url);
-          expect(req.originalUrl).to.be.equal(url);
+      it('returns URL for relative URL with out query', function (done) {
+        testMiddleware('get', '/path/to', '/path/to', function (req, res) {
+          expect(req.url).to.be.equal('/path/to');
+          expect(req.originalUrl).to.be.equal('/path/to');
+          done();
+        });
+      });
+      it('returns URL for absolute URL with query', function (done) {
+        testMiddleware('get', '/path/to', 'http://domain.com:9999/path/to?q=myquery', function (req, res) {
+          expect(req.url).to.be.equal('/path/to?q=myquery');
+          expect(req.originalUrl).to.be.equal('/path/to?q=myquery');
+          done();
+        });
+      });
+      it('returns URL for absolute URL with out query', function (done) {
+        testMiddleware('get', '/path/to', 'http://domain.com:9999/path/to', function (req, res) {
+          expect(req.url).to.be.equal('/path/to');
+          expect(req.originalUrl).to.be.equal('/path/to');
           done();
         });
       });
     });
 
     describe('req.path', function () {
-      it('has correct path for absolute url', function (done) {
-        testProps('GET', 'http://mozilla.org/nightly/browser', function (req, res) {
+      it('has correct path for relative url', function (done) {
+        testMiddleware('GET', '/nightly/browser', function (req, res) {
+          expect(req.path).to.be.equal('/nightly/browser');
+          done();
+        });
+      });
+      it('has correct path for relative url with query params', function (done) {
+        testMiddleware('GET', '/nightly/browser', '/nightly/browser?q=myquery', function (req, res) {
           expect(req.path).to.be.equal('/nightly/browser');
           done();
         });
       });
 
-      it('has correct path for relative url', function (done) {
-        testProps('GET', '/nightly/browser', function (req, res) {
+      it('has correct path for absolute url', function (done) {
+        testMiddleware('GET', '/nightly/browser', 'http://domain.com/nightly/browser', function (req, res) {
           expect(req.path).to.be.equal('/nightly/browser');
           done();
         });
@@ -114,25 +132,25 @@ describe('Request', function () {
 
     describe('req.protocol', function () {
       it('returns correct protocol for http', function (done) {
-        testProps('GET', 'http://mozilla.org/path/firefox', function (req, res) {
+        testMiddleware('GET', '/path/firefox', 'http://mozilla.org/path/firefox', function (req, res) {
           expect(req.protocol).to.be.equal('http');
           done();
         });
       });
       it('returns correct protocol for ftp', function (done) {
-        testProps('GET', 'ftp://mozilla.org/path/firefox', function (req, res) {
+        testMiddleware('GET', '/path/firefox', 'ftp://mozilla.org/path/firefox', function (req, res) {
           expect(req.protocol).to.be.equal('ftp');
           done();
         });
       });
       it('returns correct protocol for https', function (done) {
-        testProps('GET', 'https://mozilla.org/path/firefox', function (req, res) {
+        testMiddleware('GET', '/path/firefox', 'https://mozilla.org/path/firefox', function (req, res) {
           expect(req.protocol).to.be.equal('https');
           done();
         });
       });
       it('returns local page\'s protocol for relative links', function (done) {
-        testProps('GET', '/path/to/yeah', function (req, res) {
+        testMiddleware('GET', '/path/to/yeah', function (req, res) {
           var protocol = 'window' in this ? window.location.protocol : '';
           expect(req.protocol).to.be.equal(protocol.replace(':',''));
           done();
@@ -142,22 +160,22 @@ describe('Request', function () {
 
     describe('req.secure', function () {
       it('secure is true for https', function (done) {
-        testProps('GET', 'https://mozilla.org/path/firefox', function (req, res) {
+        testMiddleware('GET', '/path/firefox', 'https://mozilla.org/path/firefox', function (req, res) {
           expect(req.secure).to.be.equal(true);
           done();
         });
       });
       it('returns false for non-https', function (done) {
         var count = 3;
-        testProps('GET', 'http://mozilla.org/path/firefox', function (req, res) {
+        testMiddleware('GET', '/path/firefox', 'http://mozilla.org/path/firefox', function (req, res) {
           expect(req.secure).to.be.equal(false);
           complete();
         });
-        testProps('GET', 'http://mozilla.org/path/firefox', function (req, res) {
+        testMiddleware('GET', '/path/firefox', 'http://mozilla.org/path/firefox', function (req, res) {
           expect(req.secure).to.be.equal(false);
           complete();
         });
-        testProps('GET', 'http://mozilla.org/path/firefox', function (req, res) {
+        testMiddleware('GET', '/path/firefox', 'http://mozilla.org/path/firefox', function (req, res) {
           expect(req.secure).to.be.equal(false);
           complete();
         });
@@ -202,7 +220,7 @@ describe('Request', function () {
         var gt = new GhostTrain();
 
         gt.get('/users', function (req, res) {
-          expect(req.query.name).to.be.equal('justin%20timberlake');
+          expect(req.query.name).to.be.equal('justin timberlake');
           expect(req.query.password).to.be.equal('smoothpop');
           expect(Object.keys(req.query)).to.have.length(2);
           res.send();
@@ -359,7 +377,7 @@ describe('Request', function () {
       'accepted', 'acceptedEncodings', 'acceptedCharsets', 'acceptedLanguages'].forEach(function (prop) {
       if (getSupported()) {
         it('accessing `req.' + prop + '` throws on supported browsers', function (done) {
-          testProps('GET', '/', function (req, res) {
+          testMiddleware('GET', '/', function (req, res) {
             expect(function () {
               req[prop];
             }).to.throwError();
@@ -368,7 +386,7 @@ describe('Request', function () {
         });
       } else {
         it('accessing `req.' + prop + '` is undefined because browser does not support `Object.defineProperty`', function (done) {
-          testProps('GET', '/', function (req, res) {
+          testMiddleware('GET', '/', function (req, res) {
             expect(req[prop]).to.be.equal(undefined);
             done();
           });
@@ -380,7 +398,7 @@ describe('Request', function () {
   describe('Unsupported methods', function () {
     ['accepts', 'acceptsEncoding', 'acceptsCharset', 'acceptsLanguage'].forEach(function (prop) {
       it('Calling `req.' + prop + '()` throws', function (done) {
-        testProps('GET', '/', function (req, res) {
+        testMiddleware('GET', '/', function (req, res) {
           expect(function () {
             req[prop]();
           }).to.throwError();
@@ -391,8 +409,3 @@ describe('Request', function () {
   });
 });
 
-function testProps (method, url, callback) {
-  var gt = new GhostTrain();
-  gt[method.toLowerCase()](url, callback);
-  gt.request(method, url, function () {});
-}

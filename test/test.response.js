@@ -2,6 +2,7 @@ require('./setup');
 var GhostTrain = require('..');
 var STATUS_CODES = require('../lib/utils').STATUS_CODES;
 var expect = require('expect.js');
+var run = require('./utils').run;
 
 describe('Response', function () {
   describe('properties', function () {
@@ -256,16 +257,3 @@ describe('Response', function () {
     });
   });
 });
-
-function run (method, url, route, callback) {
-  // Shortcut
-  if (arguments.length <= 2) {
-    route = method;
-    callback = url;
-    method = 'get';
-    url = '/';
-  }
-  var gt = new GhostTrain();
-  gt[method.toLowerCase()](url, route);
-  gt.request(method, url, callback);
-}

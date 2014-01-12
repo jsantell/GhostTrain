@@ -50,32 +50,32 @@ describe('Utils', function () {
     });
   });
 
-  describe('utils.pathFromURL', function () {
+  describe('utils.requestURL', function () {
     ['string', 'parsed'].forEach(function (type) {
       function parse (string) { return type === 'parsed' ? parseURL(string) : string; }
 
       it('Returns route path from absolute URL string (with port) (' + type +')', function () {
-        var result = utils.pathFromURL(parse('http://subdomain.subdomain.domain.net:2434/my-route/something/?q=myquery'));
+        var result = utils.requestURL(parse('http://subdomain.subdomain.domain.net:2434/my-route/something/?q=myquery'));
         expect(result).to.be.equal('/my-route/something/?q=myquery');
       });
     
       it('Returns route path from absolute URL string (localhost) (' + type +')', function () {
-        var result = utils.pathFromURL(parse('http://localhost/my-route/something/?q=myquery'));
+        var result = utils.requestURL(parse('http://localhost/my-route/something/?q=myquery'));
         expect(result).to.be.equal('/my-route/something/?q=myquery');
       });
     
       it('Returns route path from absolute URL string (localhost and port) (' + type + ')', function () {
-        var result = utils.pathFromURL(parse('http://localhost:9999/my-route/something/?q=myquery'));
+        var result = utils.requestURL(parse('http://localhost:9999/my-route/something/?q=myquery'));
         expect(result).to.be.equal('/my-route/something/?q=myquery');
       });
     
       it('Returns route path from absolute URL string (no query) (' + type + ')', function () {
-        var result = utils.pathFromURL(parse('http://localhost:9999/my-route/something/'));
+        var result = utils.requestURL(parse('http://localhost:9999/my-route/something/'));
         expect(result).to.be.equal('/my-route/something/');
       });
 
       it('Returns route path from relative URL (' + type +')', function () {
-        var result = utils.pathFromURL(parse('/my-route/something/?q=myquery'));
+        var result = utils.requestURL(parse('/my-route/something/?q=myquery'));
         expect(result).to.be.equal('/my-route/something/?q=myquery');
       });
     });

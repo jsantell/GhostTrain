@@ -62,4 +62,36 @@ describe('Routing', function () {
       flag = true;
     });
   });
+
+
+  describe('Route matching', function () {
+    it('matches relative URLs with query strings', function (done) {
+      var gt = new GhostTrain();
+
+      gt.get('/users', function (req, res) {
+        expect(1).to.be.ok();
+        done();
+      });
+
+      gt.request('get', '/users?q=myquery&oh=yeah', function () {});
+    });
+
+    it('matches absolute URLs: "http://domain.com/users" -> "/users"', function (done) {
+      var gt = new GhostTrain();
+      gt.get('/users', function (req, res) {
+        expect(1).to.be.ok();
+        done();
+      });
+      gt.request('get', 'http://domain.com/users', function () {});
+    });
+
+    it('matches absolute URLs with query strings', function (done) {
+      var gt = new GhostTrain();
+      gt.get('/users', function (req, res) {
+        expect(1).to.be.ok();
+        done();
+      });
+      gt.request('get', 'http://domain.com/users?q=myquery&oh=yeah', function () {});
+    });
+  });
 });
