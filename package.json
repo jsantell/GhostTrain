@@ -1,6 +1,6 @@
 {
   "name": "ghosttrain",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Client-side router in the spirit of Express, for mock data, development and demos.",
   "main": "index.js",
   "repository": "http://github.com/jsantell/GhostTrain",
