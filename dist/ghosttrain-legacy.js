@@ -662,6 +662,8 @@ function GhostTrain () {
   this.routes = {};
 
   this.settings = {
+    'delay': 0,
+    'debug': false,
     'case sensitive routing': false,
     'strict routing': false,
     'json replacer': undefined,
@@ -720,7 +722,7 @@ GhostTrain.prototype.enable = function (key) {
  * @param {String} key
  */
 
-GhostTrain.prototype.enable = function (key) {
+GhostTrain.prototype.disable = function (key) {
   this.settings[key] = false;
 };
 
@@ -766,14 +768,18 @@ var mime = require('simple-mime')();
 var parseRange = require('range-parser');
 var parseURL = require('./url').parse;
 var unsupported = require('./utils').unsupported;
+var requestURL = require('./utils').requestURL;
 var get = require('./get').get;
 
 /**
- * Take formatted options and creates an Express style `req` object
+ * Take formatted options and creates an Express style `req` object.
+ * Takes an url `String` or an already parsed (via `./lib/url`.parse) object.
  *
- * @param {Object} ghosttrain
+ * @param {GhostTrain} ghosttrain
+ * @param {Route} route
+ * @param {Object|String} url
  * @param {Object} options
- * @return {Object}
+ * @return {Request}
  */
 
 function Request (ghosttrain, route, url, options) {
@@ -785,15 +791,15 @@ function Request (ghosttrain, route, url, options) {
   var protocol = 'window' in this ? window.location.protocol : '';
 
   // Expose URL properties
-  var parsedURL = parseURL(url, true);
+  var parsedURL = url.pathname ? url : parseURL(url, true);
   this.path = parsedURL.pathname;
   this.query = parsedURL.query;
   this.protocol = (parsedURL.protocol || protocol).replace(':', '');
   this.secure = this.protocol === 'https';
-  
+
   this.route = route;
   this.method = route.method.toUpperCase();
-  this.url = this.originalUrl = url;
+  this.url = this.originalUrl = requestURL(parsedURL);
   this.params = route.params;
   this.body = options.body || {};
   this.headers = options.headers || {};
@@ -806,18 +812,18 @@ module.exports = Request;
  *
  * Parse Range header field,
  * capping to the given `size`.
- * 
+ *
  * Unspecified ranges such as "0-" require
  * knowledge of your resource length. In
  * the case of a byte range this is of course
  * the total number of bytes. If the Range
  * header field is not given `null` is returned,
  * `-1` when unsatisfiable, `-2` when syntactically invalid.
- * 
+ *
  * NOTE: remember that ranges are inclusive, so
  * for example "Range: users=0-3" should respond
  * with 4 users when available, not 3.
- * 
+ *
  * @param {Number} size
  * @return {Array}
  */
@@ -832,24 +838,24 @@ Request.prototype.range = function(size){
 /**
  * Check if the incoming request contains the "Content-Type"
  * header field, and it contains the give mime `type`.
- * 
+ *
  * Examples:
- * 
+ *
  * // With Content-Type: text/html; charset=utf-8
  * req.is('html');
  * req.is('text/html');
  * req.is('text/*');
  * // => true
- * 
+ *
  * // When Content-Type is application/json
  * req.is('json');
  * req.is('application/json');
  * req.is('application/*');
  * // => true
- * 
+ *
  * req.is('html');
  * // => false
- * 
+ *
  * @param {String} type
  * @return {Boolean}
  */
@@ -887,11 +893,11 @@ Request.prototype.get = Request.prototype.header = function (name) {
  *   - Checks route placeholders, ex: _/user/:id_
  *   - Checks body params, ex: id=12, {"id":12}
  *   - Checks query string params, ex: ?id=12
- *   
+ *
  * To utilize request bodies, `req.body`
  * should be an object. This can be done by using
  * the `connect.bodyParser()` middleware.
- * 
+ *
  * @param {String} name
  * @param {Mixed} [defaultValue]
  * @return {String}
@@ -1231,6 +1237,9 @@ Route.prototype.match = function(path){
 var Request = require('./request');
 var Response = require('./response');
 var parseURL = require('./url').parse;
+var clone = require('./utils').clone;
+var findRoute = require('./utils').findRoute;
+var debug = require('./utils').debug;
 
 /**
  * Called from `GhostTrain#send`, makes the request via the routing service.
@@ -1259,28 +1268,24 @@ function send (ghosttrain, verb, url, params, callback) {
     params = {};
   }
 
-  // Allow optional `params` and `callback`
-  if (!params)
-    params = {};
+  // Clones if `params` is an object
+  var options = clone(params);
 
-  // Clone `params` to `options
-  var options = {};
-  for (var prop in params)
-    options[prop] = params[prop];
-
-
-  // Set up optoins
+  // Set up headers
   if (!options.headers)
     options.headers = {};
-
   if (options.contentType)
     options.headers['Content-Type'] = options.contentType;
 
-  var route = findRoute(ghosttrain, verb, url);
+  // We take out all the host information from the URL so we can match it
+  var parsedURL = parseURL(url, true);
+  var route = findRoute(ghosttrain, verb, parsedURL);
+
+  reqDebug(ghosttrain, 'REQ', verb, url);
 
   function execute () {
     if (route) {
-      req = new Request(ghosttrain, route, url, options);
+      req = new Request(ghosttrain, route, parsedURL, options);
       res = new Response(ghosttrain, success);
       route.callback(req, res);
     } else {
@@ -1290,33 +1295,18 @@ function send (ghosttrain, verb, url, params, callback) {
   }
 
   // Ensure the processing is asynchronous
-  setTimeout(execute, options.delay || 1);
+  setTimeout(execute, options.delay || ghosttrain.get('delay') || 0);
 
   function success (data) {
+    var response = render(req, res, data);
+    reqDebug(ghosttrain, 'RES', verb, url, response);
     if (!callback) return;
+
     // TODO error handling from router
-    callback(null, render(req, res, data), data);
+    callback(null, response, data);
   }
 }
 module.exports = send;
-
-/**
- * `findRoute` takes a verb and a path and returns a matching
- * GhostTrain.Route, or `null` if no matches.
- *
- * @param {String} verb
- * @param {Path} verb
- * @return {Route|null}
- */
-
-function findRoute (ghosttrain, verb, path) {
-  var routes = ghosttrain.routes[verb];
-  if (!routes) return null;
-  for (var i = 0; i < routes.length; i++)
-    if (routes[i].match(path))
-      return routes[i];
-  return null;
-};
 
 /**
  * Takes a request, response and body object and return a response object
@@ -1351,7 +1341,11 @@ function render (req, res, body) {
   return response;
 }
 
-},{"./request":5,"./response":6,"./url":9}],9:[function(require,module,exports){
+function reqDebug (gt, type, verb, url, response) {
+  debug(gt, type + ' ' + verb.toUpperCase() + ' ' + url, response)
+}
+
+},{"./request":5,"./response":6,"./url":9,"./utils":10}],9:[function(require,module,exports){
 /**
  * Node.js's `url.parse` implementation from
  * https://github.com/isaacs/node-url/
@@ -1483,6 +1477,83 @@ function parseHost(host) {
 
 },{"querystring":13}],10:[function(require,module,exports){
 var Route = require('./route');
+var parseURL = require('./url').parse;
+
+/**
+ * Prints out debugging to console if `ghosttrain.get('debug')` is true
+ * 
+ * @param {GhostTrain} gt
+ * @param {String} out
+ */
+
+function debug (gt) {
+  var args = arrayify(arguments);
+  args.splice(0, 1); // Pop first `gt` argument
+  if (gt.get('debug'))
+    console.log.apply(console, ['GhostTrain debug: '].concat(args));
+}
+exports.debug = debug;
+
+/**
+ * `findRoute` takes a verb and a `url` and returns a matching
+ * GhostTrain.Route, or `null` if no matches. `url` can be a string
+ * that gets parsed, or an already parsed (./lib/url#parse) URL object.
+ *
+ * @param {GhostTrain} ghosttrain
+ * @param {String} verb
+ * @param {String|Object} url
+ * @return {Route|null}
+ */
+
+function findRoute (ghosttrain, verb, url) {
+  // Extract path from the object or string
+  var path = url.pathname ? url.pathname : parseURL(url);
+
+  var routes = ghosttrain.routes[verb.toLowerCase()];
+  if (!routes) return null;
+  for (var i = 0; i < routes.length; i++)
+    if (routes[i].match(path))
+      return routes[i];
+  return null;
+};
+exports.findRoute = findRoute;
+
+/**
+ * Clones an object properties onto a new object
+ *
+ * @param {Object} obj
+ * @return {Object}
+ */
+
+function clone (obj) {
+  var newObj = {};
+
+  // Return a new obj if no `obj` passed in
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj))
+    return newObj;
+
+  for (var prop in obj)
+    newObj[prop] = obj[prop];
+  return newObj;
+}
+exports.clone = clone;
+
+/**
+ * Turns a url string or a parsed url object (./lib/url#parse)
+ * into a string of the URL with host/port/protocol info stripped
+ *
+ * requestURL('http://localhost:9999/search?q=myquery'); // '/search?q=myquery'
+ *
+ * @param {String|Object} url
+ * @return {String}
+ */
+
+function requestURL (url) {
+  var parsedURL = url.pathname ? url : parseURL(url, true);
+
+  return parsedURL.pathname + (parsedURL.search || '');
+}
+exports.requestURL = requestURL;
 
 /**
  * Returns a function that acts as `app.VERB(path, route)`; helper function
@@ -1640,7 +1711,7 @@ var STATUS_CODES = exports.STATUS_CODES = {
   511 : 'Network Authentication Required' // RFC 6585
 };
 
-},{"./route":7}],11:[function(require,module,exports){
+},{"./route":7,"./url":9}],11:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1712,7 +1783,7 @@ module.exports = function(qs, sep, eq, options) {
 
     if (!hasOwnProperty(obj, k)) {
       obj[k] = v;
-    } else if (isArray(obj[k])) {
+    } else if (Array.isArray(obj[k])) {
       obj[k].push(v);
     } else {
       obj[k] = [obj[k], v];
@@ -1720,10 +1791,6 @@ module.exports = function(qs, sep, eq, options) {
   }
 
   return obj;
-};
-
-var isArray = Array.isArray || function (xs) {
-  return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
 },{}],12:[function(require,module,exports){
@@ -1774,9 +1841,9 @@ module.exports = function(obj, sep, eq, name) {
   }
 
   if (typeof obj === 'object') {
-    return map(objectKeys(obj), function(k) {
+    return Object.keys(obj).map(function(k) {
       var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
-      if (isArray(obj[k])) {
+      if (Array.isArray(obj[k])) {
         return obj[k].map(function(v) {
           return ks + encodeURIComponent(stringifyPrimitive(v));
         }).join(sep);
@@ -1790,27 +1857,6 @@ module.exports = function(obj, sep, eq, name) {
   if (!name) return '';
   return encodeURIComponent(stringifyPrimitive(name)) + eq +
          encodeURIComponent(stringifyPrimitive(obj));
-};
-
-var isArray = Array.isArray || function (xs) {
-  return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-function map (xs, f) {
-  if (xs.map) return xs.map(f);
-  var res = [];
-  for (var i = 0; i < xs.length; i++) {
-    res.push(f(xs[i], i));
-  }
-  return res;
-}
-
-var objectKeys = Object.keys || function (obj) {
-  var res = [];
-  for (var key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) res.push(key);
-  }
-  return res;
 };
 
 },{}],13:[function(require,module,exports){
